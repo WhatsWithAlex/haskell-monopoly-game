@@ -6,9 +6,9 @@ cabal-version: 1.12
 
 name:           haskell-monopoly-game
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/demo-io#readme>
-homepage:       https://github.com/githubuser/demo-io#readme
-bug-reports:    https://github.com/githubuser/demo-io/issues
+description:    Please see the README on GitHub at <https://github.com/WhatsWithAlex/haskell-monopoly-game>
+homepage:       https://github.com/WhatsWithAlex/haskell-monopoly-game#readme
+bug-reports:    https://github.com/WhatsWithAlex/haskell-monopoly-game/issues
 author:         Alexey Korzhin
 maintainer:     alexeykorzhin@mail.ru
 copyright:      2022 Alexey Korzhin
@@ -17,7 +17,7 @@ build-type:     Simple
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/demo-io
+  location: https://github.com/WhatsWithAlex/haskell-monopoly-game
 
 library
   exposed-modules:
