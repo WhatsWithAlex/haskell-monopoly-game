@@ -1,30 +1,55 @@
 module Types where
 
 import Graphics.Gloss.Interface.Pure.Game
+import System.Random
 
+
+-- 2D Point/Vector on screen (in pixels)
+type Vec = (Float, Float)
+
+-- Button data type for GUI
+data PressButton = PressButton 
+  { buttonId :: Int
+  , buttonName :: String
+  , pos :: (Int, Int)
+  , isActive :: Bool
+  , isVisible :: Bool
+  , width :: Int 
+  , height :: Int
+  , buttonPic :: Picture
+  }
 
 -- General application state
 data AppState = AppState
-  { playerNumber :: Int         -- Number of current players
-  , dicesValue :: (Int, Int)    -- Current dices value
-  , players :: [PlayerState]    -- List of current players
-  , board :: BoardState         -- Current board state
-  , boardPicture :: Picture     -- Loaded board picture
+  { playerNumber :: Int           -- Number of current players
+  , randomGens :: (StdGen, StdGen)-- Random generator for dices values
+  , dicesValue :: (Int, Int)      -- Current dices value
+  , doublesInRow :: Int           -- How many times in a row doubles are thrown
+  , currentPlayer :: Int          -- Id of the player to make a turn
+  , players :: [PlayerState]      -- List of current players
+  , board :: BoardState           -- Current board state
+  , boardPicture :: Picture       -- Loaded board picture
+  , dicesPictures :: [Picture]    -- Loaded dices pictures
   }
+  deriving Show
   
 -- All infrormation about player
 data PlayerState = PlayerState 
-  { playerId :: Int         -- Player id number (0 - 4)
-  , position :: Int         -- Position on board (BoardField id)
-  , balance :: Int          -- Money the player have
-  , isJailed :: Bool        -- True if the player is in jail
-  , ownProperty :: [Int]    -- List with fields id's of property the player own
+  { playerId :: Int           -- Player id number (0 - 4)
+  , position :: Int           -- Position on board (BoardField id)
+  , balance :: Int            -- Money the player have
+  , isPlaying :: Bool         -- True if the player is still in game
+  , isJailed :: Bool          -- True if the player is in jail
+  , ownProperty :: [Int]      -- List with fields id's of player's property
+  , playerPicture :: Picture  -- Loaded player picture
   }
+  deriving Show
 
 -- Game board state
 data BoardState = BoardState
   { fields :: [BoardField]  -- All board Fields
   }
+  deriving Show
 
 -- All information about Field
 data BoardField = BoardField 
@@ -32,12 +57,14 @@ data BoardField = BoardField
   , playerCount :: Int      -- How many players are on this field 
   , fieldType :: FieldType  -- Type of the field
   }
+  deriving Show
 
 -- All field types
 data FieldType = 
   Start | Jail | Parking | Policeman | -- Corner fields
   Tax Int | Chance | CommunityChest |  -- Penalties and rewards fields
   Property PropertyField               -- Field the player can own
+  deriving Show
 
 -- All information about Property Field
 data PropertyField = PropertyField
@@ -48,12 +75,15 @@ data PropertyField = PropertyField
                             -- property (w/o multipliers)
   , propertyType :: PropertyType
   }
+  deriving Show
 
 -- All property types
 data PropertyType = Utility | RailwayStation | Street StreetField
-
+  deriving Show
+  
 -- All information about street property
 data StreetField = StreetField
   { color :: String     -- Color of the street
   , houseCount :: Int   -- How many houses are built on street
   }
+  deriving Show

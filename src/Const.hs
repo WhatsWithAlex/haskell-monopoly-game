@@ -19,18 +19,134 @@ bgColor = white
 fps :: Int
 fps = 60
 
+-- Dice values images file paths
+dice1ImagePath :: FilePath
+dice1ImagePath = "./resource/dice1.bmp"
+
+dice2ImagePath :: FilePath
+dice2ImagePath = "./resource/dice2.bmp"
+
+dice3ImagePath :: FilePath
+dice3ImagePath = "./resource/dice3.bmp"
+
+dice4ImagePath :: FilePath
+dice4ImagePath = "./resource/dice4.bmp"
+
+dice5ImagePath :: FilePath
+dice5ImagePath = "./resource/dice5.bmp"
+
+dice6ImagePath :: FilePath
+dice6ImagePath = "./resource/dice6.bmp"
+
+-- Players images file paths
+player0ImagePath :: FilePath 
+player0ImagePath = "./resource/player0.bmp"
+
+player1ImagePath :: FilePath 
+player1ImagePath = "./resource/player1.bmp"
+
+player2ImagePath :: FilePath 
+player2ImagePath = "./resource/player2.bmp"
+
+player3ImagePath :: FilePath 
+player3ImagePath = "./resource/player3.bmp"
+
+player4ImagePath :: FilePath 
+player4ImagePath = "./resource/player4.bmp"
+
 -- Board image file path
 boardImagePath :: FilePath 
-boardImagePath = "./resource/monopoly-board32v2.bmp"
+boardImagePath = "./resource/monopoly-board32v5_1024.bmp"
 
+-- Shift of the board's center from the origin
+boardCenterShift :: Vec
+boardCenterShift = (-1024, 0)
+
+-- Shift of the board's top left corner from it's center
+boardTLCShift :: Vec
+boardTLCShift = (-512, 512)
+
+-- Shift of the players figure from field's top left corner
+playerFieldShift :: Vec
+playerFieldShift = (32, -32)
+
+-- Dices shift from each other
+dicesShift :: Vec
+dicesShift = (64, 0)
+
+-- Fields coordinates relative to top left board corner
+fieldCoords :: [Vec]
+fieldCoords =
+  [ (887.0, -887.0) -- 0
+  , (804.0, -887.0) -- 1
+  , (721.0, -887.0) -- 2
+  , (638.0, -887.0) -- 3
+  , (555.0, -887.0) -- 4
+  , (471.0, -887.0) -- 5
+  , (388.0, -887.0) -- 6
+  , (305.0, -887.0) -- 7
+  , (222.0, -887.0) -- 8
+  , (138.0, -887.0) -- 9
+  , (2.0, -887.0)   -- 10
+  , (2.0, -804.0)   -- 11
+  , (2.0, -721.0)   -- 12
+  , (2.0, -638.0)   -- 13
+  , (2.0, -555.0)   -- 14
+  , (2.0, -471.0)   -- 15
+  , (2.0, -388.0)   -- 16
+  , (2.0, -305.0)   -- 17
+  , (2.0, -222.0)   -- 18
+  , (2.0, -138.0)   -- 19
+  , (2.0, -2.0)     -- 20
+  , (138.0, -2.0)   -- 21
+  , (222.0, -2.0)   -- 22
+  , (305.0, -2.0)   -- 23
+  , (388.0, -2.0)   -- 24
+  , (471.0, -2.0)   -- 25
+  , (555.0, -2.0)   -- 26
+  , (638.0, -2.0)   -- 27
+  , (721.0, -2.0)   -- 28
+  , (804.0, -2.0)   -- 29
+  , (887.0, -2.0)   -- 30
+  , (887.0, -138.0) -- 31
+  , (887.0, -222.0) -- 32
+  , (887.0, -305.0) -- 33
+  , (887.0, -388.0) -- 34
+  , (887.0, -471.0) -- 35
+  , (887.0, -555.0) -- 36
+  , (887.0, -638.0) -- 37
+  , (887.0, -721.0) -- 38
+  , (887.0, -804.0) -- 39
+  ]
+
+-- Number of fields on the board
+fieldNum :: Int
+fieldNum = 40
+
+-- Dices number range for random generator
+diceNumRange :: (Int, Int)
+diceNumRange = (1, 6)
 
 -- Initial app state
 initialAppState :: AppState
-initialAppState = AppState 1 (0, 0) [initialPlayer0] initialBoard Blank
+initialAppState = 
+  AppState 0 (mkStdGen 0, mkStdGen 0) (0, 0) 0 0 [] initialBoard Blank [Blank]
 
--- Initial player state
+-- Initial players state
 initialPlayer0 :: PlayerState
-initialPlayer0 = PlayerState 0 0 1500 False []
+initialPlayer0 = PlayerState 0 0 1500 True False [] Blank
+
+initialPlayer1 :: PlayerState
+initialPlayer1 = PlayerState 1 0 1500 True False [] Blank
+
+initialPlayer2 :: PlayerState
+initialPlayer2 = PlayerState 2 0 1500 True False [] Blank
+
+initialPlayer3 :: PlayerState
+initialPlayer3 = PlayerState 3 0 1500 False False [] Blank
+
+initialPlayer4 :: PlayerState
+initialPlayer4 = PlayerState 4 0 1500 False False [] Blank
 
 -- Initial board state
 initialBoard :: BoardState
