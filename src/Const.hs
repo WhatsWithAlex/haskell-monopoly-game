@@ -70,6 +70,10 @@ boardTLCShift = (-512, 512)
 playerFieldShift :: Vec
 playerFieldShift = (32, -32)
 
+-- Shift of jailed player figure from field's top left corner
+jailedShift :: Vec 
+jailedShift = (32, 0)
+
 -- Dices shift from each other
 dicesShift :: Vec
 dicesShift = (64, 0)
@@ -130,28 +134,31 @@ diceNumRange = (1, 6)
 -- Initial app state
 initialAppState :: AppState
 initialAppState = 
-  AppState 0 (mkStdGen 0, mkStdGen 0) (0, 0) 0 0 [] initialBoard Blank [Blank]
+  AppState 0 (mkStdGen 0, mkStdGen 0) (0, 0) 0 0 [] initialBoardFields Blank [Blank]
 
 -- Initial players state
 initialPlayer0 :: PlayerState
-initialPlayer0 = PlayerState 0 0 1500 True False [] Blank
+initialPlayer0 = PlayerState 0 0 1500 Playing [] Blank
 
 initialPlayer1 :: PlayerState
-initialPlayer1 = PlayerState 1 0 1500 True False [] Blank
+initialPlayer1 = PlayerState 1 0 1500 Playing [] Blank
 
 initialPlayer2 :: PlayerState
-initialPlayer2 = PlayerState 2 0 1500 True False [] Blank
+initialPlayer2 = PlayerState 2 0 1500 Bankrupt [] Blank
 
 initialPlayer3 :: PlayerState
-initialPlayer3 = PlayerState 3 0 1500 False False [] Blank
+initialPlayer3 = PlayerState 3 0 1500 Bankrupt [] Blank
 
 initialPlayer4 :: PlayerState
-initialPlayer4 = PlayerState 4 0 1500 False False [] Blank
+initialPlayer4 = PlayerState 4 0 1500 Bankrupt [] Blank
+
+-- Id of the jail field
+jailFieldId :: Int
+jailFieldId = 10
 
 -- Initial board state
-initialBoard :: BoardState
-initialBoard = BoardState 
-  [
+initialBoardFields :: [BoardField]
+initialBoardFields = [
     BoardField 0 0 Start,
     BoardField 1 0 (Property (
       PropertyField (-1) 60 False 2 (Street (

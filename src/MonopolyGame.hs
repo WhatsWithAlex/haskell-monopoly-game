@@ -10,88 +10,137 @@ import Debug.Trace
 
 import Types
 import Const
-
-------------------------------
--- Helper funcitons
-------------------------------
-
--- Modify element of the list by index
-modifyAt :: Int -> (a -> a) -> [a] -> [a]
-modifyAt _ _ [] = []
-modifyAt n f (x : xs)
-   | n == 0 = (f x) : xs
-   | otherwise = x : modifyAt (n - 1) f xs
-
--- Replace element of the list by index
-replaceAt :: Int -> a -> [a] -> [a]
-replaceAt n newVal = modifyAt n (\ x -> newVal)
-
--- Sum of two vectors
-(|+|) :: Vec -> Vec -> Vec 
-(|+|) (x1, y1) (x2, y2) = (x1 + x2, y1 + y2)
-
--- Get the player position on screen from board position (field id)
-plrPos2vec :: Int -> Vec
-plrPos2vec pos = vec
-  where 
-    vec = 
-      boardCenterShift |+|
-      boardTLCShift |+| 
-      (fieldCoords !! pos) |+|
-      playerFieldShift
-
--- Return current player info
-getCurrentPlayer :: AppState -> PlayerState
-getCurrentPlayer appState = (players appState) !! (currentPlayer appState)
-
--- Evaluate new current player's position according to dices values
-getNewCurrentPos :: AppState -> Int
-getNewCurrentPos appState = ((position curPlayer) + diceSum) `mod` fieldNum 
-  where
-    diceSum   = (fst (dicesValue appState)) + (snd (dicesValue appState))
-    curPlayer = getCurrentPlayer appState
-
--- Change the position of current player
-moveCurrentPlayer :: AppState -> Int -> AppState
-moveCurrentPlayer appState pos = appState { players = updatedPlayers }
-  where
-    updatedPlayers = 
-      modifyAt (currentPlayer appState) (\ plr -> plr { position = pos }) (players appState)
+import Helpers
 
 ------------------------------
 -- Main logic
 ------------------------------
 
--- Process Player's turn
-makeTurn :: AppState -> AppState
-makeTurn appState = passNextTurn . processMove . throwDices $ appState
+-- Start player's turn
+startTurn :: AppState -> AppState
+startTurn appState
+  | status curPlayer == Playing = passNextTurn . processMove . throwDices $ appState
+  | otherwise                   = appState
+  where 
+    curPlayer = getCurrentPlayer appState
 
 -- Generate new dices values
 throwDices :: AppState -> AppState
 throwDices appState 
-  | val1 == val2  = trace ("Dices: " ++ show (val1, val2) ++ " Doubles in a row: " ++ show (doublesInRow appState + 1)) appState { dicesValue = (val1, val2), randomGens = (gen1, gen2), doublesInRow = doublesInRow appState + 1 }
-  | otherwise     = trace ("Dices: " ++ show (val1, val2)) appState { dicesValue = (val1, val2), randomGens = (gen1, gen2), doublesInRow = 0 }
+  | val1 == val2 = 
+    appState 
+    { dicesValue = newDices
+    , randomGens = newGens
+    , doublesInRow = doublesInRow appState + 1 
+    }
+  | otherwise = 
+    appState 
+    { dicesValue = newDices
+    , randomGens = newGens
+    , doublesInRow = 0 
+    }
   where
     -- Get new random dices values and generators.
-    (val1, gen1) = randomR diceNumRange (fst (randomGens appState))
-    (val2, gen2) = randomR diceNumRange (snd (randomGens appState))
+    newDices      = (val1, val2)
+    newGens       = (gen1, gen2)
+    (val1, gen1)  = randomR diceNumRange (fst (randomGens appState))
+    (val2, gen2)  = randomR diceNumRange (snd (randomGens appState))
 
 -- Process current move
 processMove :: AppState -> AppState
 processMove appState = trace ("Players: " ++ (show $ players updState) ++ "\n") updState
-  where 
-    updState = moveCurrentPlayer appState (getNewCurrentPos appState)
+  where       
+    updState = case fieldType of 
+      Property propertyField -> 
+        if isMortgaged propertyField
+        then 
+          movedState
+        else if ownerId propertyField == currentPlayerId appState
+        then
+          movedState
+        else if hasOwner propertyField
+        then
+          setCurPlayerStatus movedState Paying
+        else
+          setCurPlayerStatus movedState Buying
+      Policeman   -> jailCurPlayer movedState
+      Tax amount  -> setCurPlayerStatus movedState Paying
+      _           -> movedState
+    movedState = moveCurrentPlayer appState (getNewCurrentPos appState)
+    fieldType = getFieldType movedState (position curPlayer)
+    curPlayer = getCurrentPlayer movedState
+
+-- Process buying property
+buyProperty :: AppState -> Bool -> AppState
+buyProperty appState isBuy
+  | status curPlayer /= Buying  = appState
+  | isBuy                       = passNextTurn buyState
+  | otherwise                   = passNextTurn aucState
+  where   
+    buyState  = case fieldType of
+      Property propertyField -> 
+        if enoughCurBalance appState (buyPrice propertyField)
+        then 
+          setCurPlayerStatus updState Playing
+        else
+          appState
+        where 
+          updState = 
+            addCurPlayerProperty 
+            (decreaseCurPlayerBalance appState (buyPrice propertyField)) 
+            (position curPlayer)
+      _ -> appState  
+    fieldType = getFieldType appState (position curPlayer)
+    curPlayer = getCurrentPlayer appState
+    aucState  = setCurPlayerStatus appState Playing
+  
+-- Process paying rent / tax 
+payMoney :: AppState -> AppState
+payMoney appState
+  | status curPlayer /= Paying  = appState
+  | otherwise                   = passNextTurn payState
+  where   
+    payState  = case fieldType of
+      Property propertyField -> 
+        if enoughCurBalance appState rentAmount
+        then 
+          setCurPlayerStatus updState Playing
+        else if enoughCurProperty appState rentAmount
+        then
+          appState
+        else 
+          setCurPlayerStatus appState Bankrupt
+        where 
+          updState   = payToPlayer appState (ownerId propertyField) rentAmount 
+          rentAmount = getRentAmount appState propertyField
+      Tax amount -> 
+        if enoughCurBalance appState amount
+        then 
+          setCurPlayerStatus updState Playing
+        else
+          appState
+        where 
+          updState = decreaseCurPlayerBalance appState amount
+    fieldType = getFieldType appState (position curPlayer)
+    curPlayer = getCurrentPlayer appState
+    aucState  = setCurPlayerStatus appState Playing
 
 -- Pass the turn to the next player in game
 passNextTurn :: AppState -> AppState
 passNextTurn appState
-  | (doublesInRow appState) > 0 = appState
-  | not (isPlaying nextPlayer)  = passNextTurn updState
-  | isPlaying nextPlayer        = updState
+  | doublesInRow appState > 0     = appState
+  | status curPlayer  == Buying   = appState
+  | status curPlayer  == Paying   = appState
+  | status curPlayer  == Jailed   = passNextTurn updState
+  | status nextPlayer == Bankrupt = passNextTurn updState
+  | status nextPlayer == Playing  = updState
+  | otherwise                     = passNextTurn updState
   where 
-    nextPlayerId = ((currentPlayer appState) + 1) `mod` (playerNumber appState)
-    nextPlayer   = (players appState) !! nextPlayerId
-    updState = appState { currentPlayer = nextPlayerId }
+    updState      = appState { currentPlayerId = nextPlayerId }
+    curPlayer     = getCurrentPlayer appState
+    nextPlayer    = (players appState) !! nextPlayerId
+    nextPlayerId  = 
+      ((currentPlayerId appState) + 1) `mod` (playerNumber appState)
 
 ------------------------------
 -- Graphics and Events
@@ -109,8 +158,8 @@ drawApp appState = Pictures [boardPic, playersPic, infoPic]
     infoPic = drawInfo appState
 
 -- Draw board extras
-drawBoard :: BoardState -> Picture
-drawBoard _ = Blank
+drawFields :: [BoardField] -> Picture
+drawFields _ = Blank
 
 -- Draw players on the board
 drawPlayers :: [PlayerState] -> [Picture]
@@ -119,11 +168,13 @@ drawPlayers (plr : plrs) = (drawPlayers plrs) ++ [drawPlayer plr]
 
 drawPlayer :: PlayerState -> Picture
 drawPlayer player 
-  | isPlaying player  = Translate x y pic
-  | otherwise         = Blank
+  | status player == Jailed    = Translate xJail yJail pic
+  | status player /= Bankrupt  = Translate x y pic
+  | otherwise                  = Blank
   where 
-      (x, y)  = plrPos2vec (position player)
+      (x, y)  = fieldId2Vec (position player)
       pic     = playerPicture player
+      (xJail, yJail) = (fieldId2Vec jailFieldId) |+| jailedShift
 
 -- Draw game info and statistics
 drawInfo :: AppState -> Picture
@@ -146,12 +197,20 @@ drawDices (v1, v2) pics = Pictures [pic1, pic2]
 -- Handle events
 handleEvent :: Event -> AppState -> AppState
 -- Make turn when Space is pressed
-handleEvent (EventKey (SpecialKey KeySpace) Down _ _) appState =
-  makeTurn appState
+handleEvent (EventKey (SpecialKey KeySpace) Down _ _) appState = 
+  startTurn appState
+-- Ready / Agree to pay
+handleEvent (EventKey (SpecialKey KeyEnter) Down _ _) appState = 
+  payMoney appState
+-- Agree to buy property
+handleEvent (EventKey (Char 'y') Down _ _) appState =
+  buyProperty appState True
+-- Disagree to buy property
+handleEvent (EventKey (Char 'n') Down _ _) appState =
+  buyProperty appState False
 -- Handle LMB click
 handleEvent (EventKey (MouseButton LeftButton) Down _ (x, y)) appState = 
   trace ("x: " ++ show x  ++ " y: " ++ show y) appState
-  
 -- Ignore all other events.
 handleEvent _ appState = appState
 

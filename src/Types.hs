@@ -25,9 +25,9 @@ data AppState = AppState
   , randomGens :: (StdGen, StdGen)-- Random generator for dices values
   , dicesValue :: (Int, Int)      -- Current dices value
   , doublesInRow :: Int           -- How many times in a row doubles are thrown
-  , currentPlayer :: Int          -- Id of the player to make a turn
+  , currentPlayerId :: Int        -- Id of the player to make a turn
   , players :: [PlayerState]      -- List of current players
-  , board :: BoardState           -- Current board state
+  , fields :: [BoardField]        -- List of all fields
   , boardPicture :: Picture       -- Loaded board picture
   , dicesPictures :: [Picture]    -- Loaded dices pictures
   }
@@ -38,18 +38,16 @@ data PlayerState = PlayerState
   { playerId :: Int           -- Player id number (0 - 4)
   , position :: Int           -- Position on board (BoardField id)
   , balance :: Int            -- Money the player have
-  , isPlaying :: Bool         -- True if the player is still in game
-  , isJailed :: Bool          -- True if the player is in jail
+  , status :: Status          -- True if the player is in jail
   , ownProperty :: [Int]      -- List with fields id's of player's property
   , playerPicture :: Picture  -- Loaded player picture
   }
   deriving Show
 
--- Game board state
-data BoardState = BoardState
-  { fields :: [BoardField]  -- All board Fields
-  }
-  deriving Show
+-- Possible player statuses
+data Status = 
+  Playing | Bankrupt | Jailed | Buying | Paying | Auctoring | Trading
+  deriving (Show, Eq)
 
 -- All information about Field
 data BoardField = BoardField 
@@ -64,7 +62,7 @@ data FieldType =
   Start | Jail | Parking | Policeman | -- Corner fields
   Tax Int | Chance | CommunityChest |  -- Penalties and rewards fields
   Property PropertyField               -- Field the player can own
-  deriving Show
+  deriving (Show, Eq)
 
 -- All information about Property Field
 data PropertyField = PropertyField
@@ -75,15 +73,15 @@ data PropertyField = PropertyField
                             -- property (w/o multipliers)
   , propertyType :: PropertyType
   }
-  deriving Show
+  deriving (Show, Eq)
 
 -- All property types
 data PropertyType = Utility | RailwayStation | Street StreetField
-  deriving Show
+  deriving (Show, Eq)
   
 -- All information about street property
 data StreetField = StreetField
-  { color :: String     -- Color of the street
-  , houseCount :: Int   -- How many houses are built on street
+  { color :: String   -- Color of the street
+  , upgrades :: Int   -- How many houses are built on street
   }
-  deriving Show
+  deriving (Show, Eq)
