@@ -6,6 +6,10 @@ import System.Random
 
 -- 2D Point/Vector on screen (in pixels)
 type Vec = (Float, Float)
+-- Also treat float pair as size
+type Size = Vec
+-- Rectangle represented by top left corner coords and size
+type Rectangle = (Vec, Size)
 
 -- Button data type for GUI
 data PressButton = PressButton 

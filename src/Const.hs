@@ -13,7 +13,7 @@ display = FullScreen
 
 -- Background color
 bgColor :: Color
-bgColor = white
+bgColor = black
 
 -- Simulation steps per second
 fps :: Int
@@ -60,15 +60,35 @@ boardImagePath = "./resource/monopoly-board32v5_1024.bmp"
 
 -- Shift of the board's center from the origin
 boardCenterShift :: Vec
-boardCenterShift = (-1024, 0)
+boardCenterShift = (-1024.0, 0.0)
 
 -- Shift of the board's top left corner from it's center
 boardTLCShift :: Vec
-boardTLCShift = (-512, 512)
+boardTLCShift = (-512.0, 512.0)
+
+-- Shift of the statistics' top left corner from the origin
+statsShift :: Vec 
+statsShift = (-512.0, 384.0)
 
 -- Shift of the players figure from field's top left corner
-playerFieldShift :: Vec
-playerFieldShift = (32, -32)
+playersFieldShift :: [Vec]
+playersFieldShift = 
+  [ (32.0, -16.0) -- 0
+  , (32.0, -32.0) -- 1
+  , (32.0, -48.0) -- 2
+  , (32.0, -64.0) -- 3
+  , (32.0, -80)   -- 4
+  ]
+
+-- Shift of the players stats from status window's top left corner
+playersStatsShift :: [Vec]
+playersStatsShift =
+  [ (0.0, 0.0)    -- 0
+  , (0.0, -128.0)  -- 1
+  , (0.0, -256.0) -- 2
+  , (0.0, -384.0) -- 3
+  , (0.0, -512.0) -- 4
+  ]
 
 -- Shift of jailed player figure from field's top left corner
 jailedShift :: Vec 
@@ -78,49 +98,61 @@ jailedShift = (32, 0)
 dicesShift :: Vec
 dicesShift = (64, 0)
 
--- Fields coordinates relative to top left board corner
-fieldCoords :: [Vec]
-fieldCoords =
-  [ (887.0, -887.0) -- 0
-  , (804.0, -887.0) -- 1
-  , (721.0, -887.0) -- 2
-  , (638.0, -887.0) -- 3
-  , (555.0, -887.0) -- 4
-  , (471.0, -887.0) -- 5
-  , (388.0, -887.0) -- 6
-  , (305.0, -887.0) -- 7
-  , (222.0, -887.0) -- 8
-  , (138.0, -887.0) -- 9
-  , (2.0, -887.0)   -- 10
-  , (2.0, -804.0)   -- 11
-  , (2.0, -721.0)   -- 12
-  , (2.0, -638.0)   -- 13
-  , (2.0, -555.0)   -- 14
-  , (2.0, -471.0)   -- 15
-  , (2.0, -388.0)   -- 16
-  , (2.0, -305.0)   -- 17
-  , (2.0, -222.0)   -- 18
-  , (2.0, -138.0)   -- 19
-  , (2.0, -2.0)     -- 20
-  , (138.0, -2.0)   -- 21
-  , (222.0, -2.0)   -- 22
-  , (305.0, -2.0)   -- 23
-  , (388.0, -2.0)   -- 24
-  , (471.0, -2.0)   -- 25
-  , (555.0, -2.0)   -- 26
-  , (638.0, -2.0)   -- 27
-  , (721.0, -2.0)   -- 28
-  , (804.0, -2.0)   -- 29
-  , (887.0, -2.0)   -- 30
-  , (887.0, -138.0) -- 31
-  , (887.0, -222.0) -- 32
-  , (887.0, -305.0) -- 33
-  , (887.0, -388.0) -- 34
-  , (887.0, -471.0) -- 35
-  , (887.0, -555.0) -- 36
-  , (887.0, -638.0) -- 37
-  , (887.0, -721.0) -- 38
-  , (887.0, -804.0) -- 39
+-- Size of the corner board fields
+cornerFieldSize :: Vec 
+cornerFieldSize = (134.0, -134.0)
+
+-- Size of the vertical board fields
+vertFieldSize :: Vec 
+vertFieldSize = (81.0, -134.0)
+
+-- Size of the horizontal board fields
+horFieldSize :: Vec 
+horFieldSize = (134.0, -81.0)
+
+-- Board field rectangles relative to the board's top left corner
+fieldRects :: [Rectangle]
+fieldRects =
+  [ ((887.0, -887.0), cornerFieldSize)-- 0
+  , ((804.0, -887.0), vertFieldSize)  -- 1
+  , ((721.0, -887.0), vertFieldSize)  -- 2
+  , ((638.0, -887.0), vertFieldSize)  -- 3
+  , ((555.0, -887.0), vertFieldSize)  -- 4
+  , ((471.0, -887.0), vertFieldSize)  -- 5
+  , ((388.0, -887.0), vertFieldSize)  -- 6
+  , ((305.0, -887.0), vertFieldSize)  -- 7
+  , ((222.0, -887.0), vertFieldSize)  -- 8
+  , ((138.0, -887.0), vertFieldSize)  -- 9
+  , ((2.0, -887.0), cornerFieldSize)  -- 10
+  , ((2.0, -804.0), horFieldSize)     -- 11
+  , ((2.0, -721.0), horFieldSize)     -- 12
+  , ((2.0, -638.0), horFieldSize)     -- 13
+  , ((2.0, -555.0), horFieldSize)     -- 14
+  , ((2.0, -471.0), horFieldSize)     -- 15
+  , ((2.0, -388.0), horFieldSize)     -- 16
+  , ((2.0, -305.0), horFieldSize)     -- 17
+  , ((2.0, -222.0), horFieldSize)     -- 18
+  , ((2.0, -138.0), horFieldSize)     -- 19
+  , ((2.0, -2.0), cornerFieldSize)    -- 20
+  , ((138.0, -2.0), vertFieldSize)    -- 21
+  , ((222.0, -2.0), vertFieldSize)    -- 22
+  , ((305.0, -2.0), vertFieldSize)    -- 23
+  , ((388.0, -2.0), vertFieldSize)    -- 24
+  , ((471.0, -2.0), vertFieldSize)    -- 25
+  , ((555.0, -2.0), vertFieldSize)    -- 26
+  , ((638.0, -2.0), vertFieldSize)    -- 27
+  , ((721.0, -2.0), vertFieldSize)    -- 28
+  , ((804.0, -2.0), vertFieldSize)    -- 29
+  , ((887.0, -2.0), cornerFieldSize)  -- 30
+  , ((887.0, -138.0), horFieldSize)   -- 31
+  , ((887.0, -222.0), horFieldSize)   -- 32
+  , ((887.0, -305.0), horFieldSize)   -- 33
+  , ((887.0, -388.0), horFieldSize)   -- 34
+  , ((887.0, -471.0), horFieldSize)   -- 35
+  , ((887.0, -555.0), horFieldSize)   -- 36
+  , ((887.0, -638.0), horFieldSize)   -- 37
+  , ((887.0, -721.0), horFieldSize)   -- 38
+  , ((887.0, -804.0), horFieldSize)   -- 39
   ]
 
 -- Number of fields on the board
@@ -151,6 +183,16 @@ initialPlayer3 = PlayerState 3 0 1500 Bankrupt [] Blank
 
 initialPlayer4 :: PlayerState
 initialPlayer4 = PlayerState 4 0 1500 Bankrupt [] Blank
+
+-- Colors of the players
+playersColors :: [Color]
+playersColors = 
+  [ red
+  , yellow
+  , green
+  , blue
+  , violet
+  ]
 
 -- Id of the jail field
 jailFieldId :: Int

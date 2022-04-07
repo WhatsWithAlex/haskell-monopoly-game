@@ -66,7 +66,9 @@ processMove appState = trace ("Players: " ++ (show $ players updState) ++ "\n") 
       Policeman   -> jailCurPlayer movedState
       Tax amount  -> setCurPlayerStatus movedState Paying
       _           -> movedState
-    movedState = moveCurrentPlayer appState (getNewCurrentPos appState)
+    movedState = case doublesInRow appState of
+      3 -> jailCurPlayer appState
+      _ -> moveCurrentPlayer appState (getNewCurrentPos appState)
     fieldType = getFieldType movedState (position curPlayer)
     curPlayer = getCurrentPlayer movedState
 
@@ -117,8 +119,11 @@ payMoney appState
         if enoughCurBalance appState amount
         then 
           setCurPlayerStatus updState Playing
-        else
+        else if enoughCurProperty appState amount
+        then
           appState
+        else
+          setCurPlayerStatus appState Bankrupt
         where 
           updState = decreaseCurPlayerBalance appState amount
     fieldType = getFieldType appState (position curPlayer)
@@ -134,6 +139,7 @@ passNextTurn appState
   | status curPlayer  == Jailed   = passNextTurn updState
   | status nextPlayer == Bankrupt = passNextTurn updState
   | status nextPlayer == Playing  = updState
+  | status nextPlayer == Jailed   = updState
   | otherwise                     = passNextTurn updState
   where 
     updState      = appState { currentPlayerId = nextPlayerId }
@@ -148,45 +154,58 @@ passNextTurn appState
 
 -- Draw an app
 drawApp :: AppState -> Picture
-drawApp appState = Pictures [boardPic, playersPic, infoPic]
+drawApp appState = Pictures [boardPic, fieldsPic, playersPic, infoPic]
   where 
     boardPic = Translate 
       (fst boardCenterShift) 
       (snd boardCenterShift) 
       (boardPicture appState)
-    playersPic = Pictures (drawPlayers (players appState))
-    infoPic = drawInfo appState
+    fieldsPic   = Pictures (map drawField (fields appState))
+    playersPic  = Pictures (map drawPlayer (players appState))
+    infoPic     = drawInfo appState
 
--- Draw board extras
-drawFields :: [BoardField] -> Picture
-drawFields _ = Blank
+-- Draw information about field on board
+drawField :: BoardField -> Picture
+drawField field = case fieldType field of
+  Property propertyField -> 
+    if ownerId propertyField /= -1 
+    then 
+      Color clr (Translate (x + w / 2 + 1) (y + h / 2) (rectangleWire w (-h)))
+    else
+      Blank
+    where
+      clr = playersColors !! (ownerId propertyField)
+      (x, y) = (fieldId2Vec (fieldId field))
+      (w, h) = snd (fieldRects !! (fieldId field))
+  _ -> Blank
 
--- Draw players on the board
-drawPlayers :: [PlayerState] -> [Picture]
-drawPlayers [] = []
-drawPlayers (plr : plrs) = (drawPlayers plrs) ++ [drawPlayer plr]
-
+-- Draw player figure on board
 drawPlayer :: PlayerState -> Picture
 drawPlayer player 
   | status player == Jailed    = Translate xJail yJail pic
   | status player /= Bankrupt  = Translate x y pic
   | otherwise                  = Blank
   where 
-      (x, y)  = fieldId2Vec (position player)
+      (x, y)  = (fieldId2Vec (position player)) |+| offset
+      (xJail, yJail) = (fieldId2Vec jailFieldId) |+| jailedShift |+| offset
       pic     = playerPicture player
-      (xJail, yJail) = (fieldId2Vec jailFieldId) |+| jailedShift
+      offset  = playersFieldShift !! (playerId player)
 
 -- Draw game info and statistics
 drawInfo :: AppState -> Picture
-drawInfo appState = Pictures [dicesPic]
+drawInfo appState = Pictures [dicesPic, playersStatsPic]
   where
-    dicesPic  = Translate x y (drawDices (v1, v2) dicesPics)
+    dicesPic  = Translate xDices yDices (drawDices (v1, v2) dicesPics)
     dicesPics = dicesPictures appState 
-    (x, y)    = boardCenterShift
     (v1, v2)  = dicesValue appState
+    playersStatsPic = 
+      Translate xStats yStats
+      (Pictures (map drawPlayerStats (players appState)))
+    (xDices, yDices) = boardCenterShift
+    (xStats, yStats) = statsShift
     
 -- Draw dices images
-drawDices :: (Int, Int) -> [Picture]-> Picture
+drawDices :: (Int, Int) -> [Picture] -> Picture
 drawDices (0, 0)   pics = Blank
 drawDices (v1, v2) pics = Pictures [pic1, pic2]
   where
@@ -194,23 +213,39 @@ drawDices (v1, v2) pics = Pictures [pic1, pic2]
     pic2 = Translate x y (pics !! (v2 - 1))
     (x, y) = dicesShift
 
+-- Draw player balance and status info
+drawPlayerStats :: PlayerState -> Picture
+drawPlayerStats player = 
+  Translate x y statText
+  where
+    (x, y)      = playersStatsShift !! id
+    statText    = Color clr (Text statStr)
+    statStr     = 
+      "Player" ++ idStr ++ ": " ++ balanceStr ++ " Status: " ++ statusStr
+    idStr       = show (id + 1)
+    balanceStr  = show (balance player)
+    statusStr   = show (status player)
+    clr         = playersColors !! id
+    id          = playerId player
+
+
 -- Handle events
 handleEvent :: Event -> AppState -> AppState
 -- Make turn when Space is pressed
 handleEvent (EventKey (SpecialKey KeySpace) Down _ _) appState = 
-  startTurn appState
+  trace ("Space: " ++ (show $ players appState) ++ "\n") (startTurn appState)
 -- Ready / Agree to pay
 handleEvent (EventKey (SpecialKey KeyEnter) Down _ _) appState = 
-  payMoney appState
--- Agree to buy property
+  trace ("Enter: " ++ (show $ players appState) ++ "\n") (payMoney appState)
+-- Agree to buy property by pressing 'y'
 handleEvent (EventKey (Char 'y') Down _ _) appState =
-  buyProperty appState True
--- Disagree to buy property
+  trace ("Y: " ++ (show $ players appState) ++ "\n") (buyProperty appState True)
+-- Disagree to buy property by pressing 'n'
 handleEvent (EventKey (Char 'n') Down _ _) appState =
-  buyProperty appState False
--- Handle LMB click
+  trace ("N: " ++ (show $ players appState) ++ "\n") (buyProperty appState False)
+-- Upgrade property by clicking LMB on it
 handleEvent (EventKey (MouseButton LeftButton) Down _ (x, y)) appState = 
-  trace ("x: " ++ show x  ++ " y: " ++ show y) appState
+  trace ("(x, y): " ++ show (x, y) ++ " fieldId: " ++ show (vec2FieldId (x, y))) appState
 -- Ignore all other events.
 handleEvent _ appState = appState
 

@@ -1,5 +1,8 @@
 module Helpers where 
 
+import Data.List
+import Debug.Trace
+
 import Types
 import Const
 
@@ -19,15 +22,34 @@ replaceAt n newVal = modifyAt n (\ x -> newVal)
 (|+|) :: Vec -> Vec -> Vec 
 (|+|) (x1, y1) (x2, y2) = (x1 + x2, y1 + y2)
 
--- Get the player position on screen from board position (field id)
-fieldId2Vec :: Int -> Vec
-fieldId2Vec pos = vec
+-- Difference of two vectors
+(|-|) :: Vec -> Vec -> Vec 
+(|-|) (x1, y1) (x2, y2) = (x1 - x2, y1 - y2)
+
+-- Check if vector (point) is inside a rectangle
+isInside :: Vec -> Rectangle -> Bool
+isInside (x, y) (offset, size) = 
+  trace ("x, y, x1, y1, x2, y2: " ++ show (x, y, x1, y1, x2, y2)) $
+  x >= x1 && x <= x2 && (-y) >= (-y1) && (-y) <= (-y2)
+  where
+    x1 = fst offset
+    x2 = x1 + fst size
+    y1 = snd offset
+    y2 = y1 + snd size
+
+-- Get field id by position on screen
+vec2FieldId :: Vec -> Maybe Int
+vec2FieldId vec = 
+  findIndex (\ rect -> isInside (xBrd, yBrd) rect) fieldRects
   where 
-    vec = 
-      boardCenterShift |+|
-      boardTLCShift |+| 
-      (fieldCoords !! pos) |+|
-      playerFieldShift
+    (xBrd, yBrd) = vec |-| boardCenterShift |-| boardTLCShift
+
+-- Get top left corner position of field on screen by field id
+fieldId2Vec :: Int -> Vec
+fieldId2Vec id =
+  boardCenterShift |+|
+  boardTLCShift |+| 
+  fst (fieldRects !! id)
 
 -- Get player info by id
 getPlayer :: AppState -> Int -> PlayerState
