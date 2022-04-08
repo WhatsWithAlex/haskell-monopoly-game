@@ -33,6 +33,8 @@ data AppState = AppState
   , players :: [PlayerState]      -- List of current players
   , fields :: [BoardField]        -- List of all fields
   , boardPicture :: Picture       -- Loaded board picture
+  , housePicture :: Picture       -- Loaded house upgrade picture
+  , hotelPicture :: Picture       -- Loaded hotel upgrade picture
   , dicesPictures :: [Picture]    -- Loaded dices pictures
   }
   deriving Show
@@ -85,7 +87,15 @@ data PropertyType = Utility | RailwayStation | Street StreetField
   
 -- All information about street property
 data StreetField = StreetField
-  { color :: String   -- Color of the street
-  , upgrades :: Int   -- How many houses are built on street
+  { streetColor :: StreetColor  -- Color of the street
+  , upgrades :: Int       -- How many houses are built on street
   }
+  deriving (Show, Eq)
+
+-- All street colors
+data StreetColor = 
+  Brown | LightBlue | 
+  Pink | Orange | 
+  Red | Yellow | 
+  Green | DarkBlue
   deriving (Show, Eq)
