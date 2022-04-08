@@ -54,10 +54,9 @@ processMove appState = updState
   where       
     updState = case fieldType of 
       Property propertyField -> 
-        if isMortgaged propertyField
-        then 
-          movedState
-        else if ownerId propertyField == currentPlayerId appState
+        if 
+          isMortgaged propertyField ||
+          ownerId propertyField == currentPlayerId appState
         then
           movedState
         else if hasOwner propertyField
@@ -71,8 +70,8 @@ processMove appState = updState
     movedState = case doublesInRow appState of
       3 -> jailCurPlayer appState
       _ -> 
-        if newCurPos < (position curPlayer) 
-        then 
+        if newCurPos < position curPlayer
+        then
           increaseCurPlayerBalance newState roundSalary
         else 
           newState
@@ -121,6 +120,7 @@ payMoney appState
           rentAmount = getRentAmount appState propertyField
       Tax amount  -> checkAndPay appState (-1) amount
       Jail        -> checkAndPay appState (-1) releaseTax
+      _           -> appState
     fieldType = getFieldType appState (position curPlayer)
     curPlayer = getCurrentPlayer appState
     aucState  = setCurPlayerStatus appState Playing
@@ -133,6 +133,7 @@ makeUpgrade appState fieldId = case getFieldType appState fieldId of
       if 
         enoughCurBalance appState upgradePrice &&
         hasMonopoly appState (streetColor streetField) &&
+        not (isMortgaged propertyField) &&
         upgrades streetField == curMinUpgrade &&
         upgrades streetField < maxUpgrades
       then 
@@ -187,6 +188,7 @@ makeDowngrade appState fieldId = case getFieldType appState fieldId of
         fieldId
       else if 
         ownrId == currentPlayerId appState &&
+        upgrades streetField == 0 &&
         not (isMortgaged propertyField)
       then
         mortgageProperty
@@ -196,8 +198,8 @@ makeDowngrade appState fieldId = case getFieldType appState fieldId of
         appState
       where
         maxUpgrade        = getMaxUpgrade appState (streetColor streetField)
-        downgradePayment  = (getUpgradePrice appState fieldId) `div` 2
-        mortgagePayment   = (buyPrice propertyField) `div` 2
+        downgradePayment  = getUpgradePrice appState fieldId `div` 2
+        mortgagePayment   = buyPrice propertyField `div` 2
         ownrId            = ownerId (getProperty appState fieldId)
     _ ->
       if 
@@ -210,7 +212,7 @@ makeDowngrade appState fieldId = case getFieldType appState fieldId of
       else 
         appState
       where
-        mortgagePayment   = (buyPrice propertyField) `div` 2
+        mortgagePayment   = buyPrice propertyField `div` 2
         ownrId            = ownerId (getProperty appState fieldId)
   _ -> appState
 
@@ -228,9 +230,9 @@ passNextTurn appState
   where 
     updState      = appState { currentPlayerId = nextPlayerId }
     curPlayer     = getCurrentPlayer appState
-    nextPlayer    = (players appState) !! nextPlayerId
+    nextPlayer    = players appState !! nextPlayerId
     nextPlayerId  = 
-      ((currentPlayerId appState) + 1) `mod` (playerNumber appState)
+      (currentPlayerId appState + 1) `mod` playerNumber appState
 
 ------------------------------
 -- Graphics and Events
@@ -241,16 +243,13 @@ drawApp :: AppState -> Picture
 drawApp appState = 
   Pictures [boardPic, fieldsPic, playersPic, infoPic, upgrades]
   where 
-    boardPic = Translate 
-      (fst boardCenterShift) 
-      (snd boardCenterShift) 
-      (boardPicture appState)
+    boardPic    = uncurry Translate boardCenterShift (boardPicture appState)
     fieldsPic   = Pictures (map drawField (fields appState))
     playersPic  = Pictures (map drawPlayer (players appState))
     infoPic     = drawInfo appState
     upgrades    = 
       Pictures
-      (map (\ field -> drawFieldUpgrades appState field) (fields appState))
+      (map (drawFieldUpgrades appState) (fields appState))
 
 -- Draw information about field on board
 drawField :: BoardField -> Picture
@@ -266,11 +265,11 @@ drawField field = case fieldType field of
     else
       Blank
     where
-      fieldPic = (Translate (x + w / 2 + 1) (y + h / 2) (rectangleWire w (-h)))
+      fieldPic = Translate (x + w / 2 + 1) (y + h / 2) (rectangleWire w (-h))
       mortgagedPic = Line [(x, y), (x + w, y + h)]
-      clr = playersColors !! (ownerId propertyField)
-      (x, y) = (fieldId2Vec (fieldId field))
-      (w, h) = snd (fieldRects !! (fieldId field))
+      clr = playersColors !! ownerId propertyField
+      (x, y) = fieldId2Vec (fieldId field)
+      (w, h) = snd (fieldRects !! fieldId field)
   _ -> Blank
 
 -- Draw street upgrades
@@ -292,6 +291,7 @@ drawFieldUpgrades appState field = case fieldType field of
         Translate x y
         (Rotate 270.0
         (drawUpgrades (housePic, hotelPic) (upgrades streetField)))
+      _ -> Blank
     _ -> Blank
   _ -> Blank
   where 
@@ -309,7 +309,7 @@ drawUpgrades (housePic, hotelPic) num = case num of
 drawHouses :: Picture -> Int -> [Picture]
 drawHouses housePic 0 = []
 drawHouses housePic idx = 
-  [Translate (houseShift * i) 0 housePic] ++ drawHouses housePic (idx - 1)
+  Translate (houseShift * i) 0 housePic : drawHouses housePic (idx - 1)
   where 
     i = fromIntegral (idx - 1) :: Float
 
@@ -320,10 +320,10 @@ drawPlayer player
   | status player /= Bankrupt  = Translate x y pic
   | otherwise                  = Blank
   where 
-      (x, y)  = (fieldId2Vec (position player)) |+| offset
-      (xJail, yJail) = (fieldId2Vec jailFieldId) |+| jailedShift |+| offset
+      (x, y)  = fieldId2Vec (position player) |+| offset
+      (xJail, yJail) = fieldId2Vec jailFieldId |+| jailedShift |+| offset
       pic     = playerPicture player
-      offset  = playersFieldShift !! (playerId player)
+      offset  = playersFieldShift !! playerId player
 
 -- Draw game info and statistics
 drawInfo :: AppState -> Picture
@@ -335,7 +335,7 @@ drawInfo appState = Pictures [dicesPic, playersStatsPic]
     playersStatsPic = 
       Translate xStats yStats
       (Pictures 
-      (map (\ plr -> drawPlayerStats appState plr) (players appState)))
+      (map (drawPlayerStats appState) (players appState)))
     (xDices, yDices) = boardCenterShift
     (xStats, yStats) = statsShift
     

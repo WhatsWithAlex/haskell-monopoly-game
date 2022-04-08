@@ -114,7 +114,7 @@ houseUpgradesShift =
 
 -- Shift of jailed player figure from field's top left corner
 jailedShift :: Vec 
-jailedShift = (32, 0)
+jailedShift = (48, 0)
 
 -- Dices shift from each other
 dicesShift :: Vec
@@ -196,7 +196,7 @@ initialPlayer0 :: PlayerState
 initialPlayer0 = PlayerState 0 0 1500 Playing [] Blank
 
 initialPlayer1 :: PlayerState
-initialPlayer1 = PlayerState 1 0 100 Playing [] Blank
+initialPlayer1 = PlayerState 1 0 1500 Playing [] Blank
 
 initialPlayer2 :: PlayerState
 initialPlayer2 = PlayerState 2 0 1500 Bankrupt [] Blank
@@ -250,7 +250,7 @@ initialBoardFields = [
     )),
     BoardField 4 0 (Tax 200),
     BoardField 5 0 (Property (
-      PropertyField (-1) 200 False 25 (RailwayStation)
+      PropertyField (-1) 200 False 25 RailwayStation
     )),
     BoardField 6 0 (Property (
       PropertyField (-1) 100 False 6 (Street (

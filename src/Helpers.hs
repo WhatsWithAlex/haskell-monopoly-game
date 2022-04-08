@@ -11,12 +11,12 @@ import Const
 modifyAt :: Int -> (a -> a) -> [a] -> [a]
 modifyAt _ _ [] = []
 modifyAt n f (x : xs)
-   | n == 0 = (f x) : xs
+   | n == 0 = f x : xs
    | otherwise = x : modifyAt (n - 1) f xs
 
 -- Replace element of the list by index
 replaceAt :: Int -> a -> [a] -> [a]
-replaceAt n newVal = modifyAt n (\ x -> newVal)
+replaceAt n newVal = modifyAt n (const newVal)
 
 -- Remove given item from the list
 removeItem :: Eq a => a -> [a] -> [a]
@@ -46,7 +46,7 @@ isInside (x, y) (offset, size) =
 -- Get field id by position on screen
 vec2FieldId :: Vec -> Maybe Int
 vec2FieldId vec = 
-  findIndex (\ rect -> isInside (xBrd, yBrd) rect) fieldRects
+  findIndex (isInside (xBrd, yBrd)) fieldRects
   where 
     (xBrd, yBrd) = vec |-| boardCenterShift |-| boardTLCShift
 
@@ -59,7 +59,7 @@ fieldId2Vec id =
 
 -- Get player info by id
 getPlayer :: AppState -> Int -> PlayerState
-getPlayer appState id = (players appState) !! id
+getPlayer appState id = players appState !! id
 
 -- Return current player info
 getCurrentPlayer :: AppState -> PlayerState
@@ -67,9 +67,9 @@ getCurrentPlayer appState = getPlayer appState (currentPlayerId appState)
 
 -- Evaluate new current player's position according to dices values
 getNewCurrentPos :: AppState -> Int
-getNewCurrentPos appState = ((position curPlayer) + diceSum) `mod` fieldNum 
+getNewCurrentPos appState = (position curPlayer + diceSum) `mod` fieldNum 
   where
-    diceSum   = (fst (dicesValue appState)) + (snd (dicesValue appState))
+    diceSum   = fst (dicesValue appState) + snd (dicesValue appState)
     curPlayer = getCurrentPlayer appState
 
 -- Change the position of current player
@@ -100,12 +100,12 @@ decreasePlayerBalance appState playerId amount =
     updatedPlayers  = 
       modifyAt 
       playerId (\ plr -> plr { balance = updBalance }) (players appState)
-    updBalance = (balance (getPlayer appState playerId)) - amount
+    updBalance = balance (getPlayer appState playerId) - amount
 
 -- Decrease current player's money
 decreaseCurPlayerBalance :: AppState -> Int -> AppState
-decreaseCurPlayerBalance appState amount =
-  decreasePlayerBalance appState (currentPlayerId appState) amount
+decreaseCurPlayerBalance appState =
+  decreasePlayerBalance appState (currentPlayerId appState)
 
 -- Increase player's money
 increasePlayerBalance :: AppState -> Int -> Int -> AppState
@@ -115,12 +115,12 @@ increasePlayerBalance appState playerId amount =
     updatedPlayers  = 
       modifyAt 
       playerId (\ plr -> plr { balance = updBalance }) (players appState)
-    updBalance = (balance (getPlayer appState playerId)) + amount
+    updBalance = balance (getPlayer appState playerId) + amount
 
 -- Increase current player's money
 increaseCurPlayerBalance :: AppState -> Int -> AppState
-increaseCurPlayerBalance appState amount =
-  increasePlayerBalance appState (currentPlayerId appState) amount
+increaseCurPlayerBalance appState =
+  increasePlayerBalance appState (currentPlayerId appState)
 
 -- Pay money to given player by current player
 payToPlayer :: AppState -> Int -> Int -> AppState
@@ -144,6 +144,7 @@ getProperty :: AppState -> Int -> PropertyField
 getProperty appState id = 
   case getFieldType appState id of
     Property prop -> prop
+    _ -> error "getProperty: not a property"
 
 -- Get property type by field id
 getPropertyType :: AppState -> Int -> PropertyType 
@@ -154,6 +155,7 @@ getStreet :: AppState -> Int -> StreetField
 getStreet appState id = 
   case getPropertyType appState id of
     Street street -> street
+    _ -> error "getProperty: not a street"
 
 -- Check if the property has owner
 hasOwner :: PropertyField -> Bool 
@@ -169,7 +171,7 @@ addPlayerProperty appState playerId fieldId =
       playerId
       (\ plr -> plr { ownProperty = updOwnProperty }) 
       (players appState)
-    updOwnProperty = (ownProperty player) ++ [fieldId]
+    updOwnProperty = ownProperty player ++ [fieldId]
     updFields = 
       modifyAt 
       fieldId 
@@ -181,8 +183,8 @@ addPlayerProperty appState playerId fieldId =
 
 -- Add property field by id to the current player
 addCurPlayerProperty :: AppState -> Int -> AppState
-addCurPlayerProperty appState fieldId = 
-  addPlayerProperty appState (currentPlayerId appState) fieldId
+addCurPlayerProperty appState = 
+  addPlayerProperty appState (currentPlayerId appState)
 
 -- Remove property field by id from the given player
 removePlayerProperty :: AppState -> Int -> Int -> AppState
@@ -206,8 +208,8 @@ removePlayerProperty appState playerId fieldId =
 
 -- Remove property field by id from the current player
 removeCurPlayerProperty :: AppState -> Int -> AppState
-removeCurPlayerProperty appState fieldId = 
-  removePlayerProperty appState (currentPlayerId appState) fieldId
+removeCurPlayerProperty appState = 
+  removePlayerProperty appState (currentPlayerId appState)
 
 -- Remove all property from the given player
 removeCurPlayerAllProperty :: AppState -> AppState
@@ -241,12 +243,13 @@ getRentAmount appState property =
     Utility -> case countOwnedUtilities appState (ownerId property) of
       1 ->  4 * dicesSum
       2 -> 10 * dicesSum
+      _ -> 0
     RailwayStation -> 
-      (initialRentPrice property) * 
-      (countOwnedStations appState (ownerId property)) 
+      initialRentPrice property * 
+      countOwnedStations appState (ownerId property) 
     Street street -> case upgrades street of 
       0 -> initialRentPrice property
-      x -> (initialRentPrice property) * 5 * x
+      x -> initialRentPrice property * 5 * x
     where 
       dicesSum = val1 + val2
       (val1, val2) = dicesValue appState
@@ -262,7 +265,7 @@ getPlayerPropertyPrice appState playerId =
   sum $ map 
   (\ fieldId -> case getPropertyType appState fieldId of 
     Street str  -> 
-      (upgrades str) * ((getUpgradePrice appState fieldId) `div` 2)
+      upgrades str * (getUpgradePrice appState fieldId `div` 2)
     _ -> 
       buyPrice (getProperty appState fieldId) `div` 2)
   (ownProperty player)
@@ -277,25 +280,20 @@ getCurPlayerPropertyPrice appState =
 -- Check if player has enough property to pay
 enoughCurProperty :: AppState -> Int -> Bool
 enoughCurProperty appState amount = 
-  (getCurPlayerPropertyPrice appState) >= amount
+  getCurPlayerPropertyPrice appState >= amount
 
 -- Check if current player has enough balance 
 enoughCurBalance :: AppState -> Int -> Bool
-enoughCurBalance appState amount = (balance curPlayer) >= amount
+enoughCurBalance appState amount = balance curPlayer >= amount
   where
     curPlayer = getCurrentPlayer appState
 
 -- Check if current player has enough balance to pay and make payment
 checkAndPay :: AppState -> Int -> Int -> AppState
-checkAndPay appState playerId amount = 
-  if enoughCurBalance appState amount
-  then 
-    setCurPlayerStatus updState Playing
-  else if enoughCurProperty appState amount
-  then
-    appState
-  else
-    setCurPlayerStatus (removeCurPlayerAllProperty appState) Bankrupt
+checkAndPay appState playerId amount 
+  | enoughCurBalance appState amount  = setCurPlayerStatus updState Playing
+  | enoughCurProperty appState amount = appState
+  | otherwise                         = setCurPlayerStatus (removeCurPlayerAllProperty appState) Bankrupt
   where 
     updState = case playerId of 
       -1 -> decreaseCurPlayerBalance appState amount
@@ -350,7 +348,7 @@ hasMonopoly appState clr =
 getMinUpgrade :: AppState -> StreetColor -> Int
 getMinUpgrade appState clr = 
   minimum $ map 
-  (\ fld -> upgrades (getStreet appState (fieldId fld)))
+  (upgrades . getStreet appState . fieldId)
   colorStreets
   where
     colorStreets = 
@@ -366,7 +364,7 @@ getMinUpgrade appState clr =
 getMaxUpgrade :: AppState -> StreetColor -> Int
 getMaxUpgrade appState clr = 
   maximum $ map 
-  (\ fld -> upgrades (getStreet appState (fieldId fld)))
+  (upgrades . getStreet appState . fieldId)
   colorStreets
   where
     colorStreets = 
@@ -389,7 +387,7 @@ upgradeStreet appState fieldId = appState { fields = updFields }
       (fields appState)
     updProperty   = Property propertyField { propertyType = updStreet }
     propertyField = getProperty appState fieldId
-    updStreet     = Street street { upgrades = (upgrades street) + 1 }
+    updStreet     = Street street { upgrades = upgrades street + 1 }
     street        = getStreet appState fieldId
 
 -- Downgrade given street field
@@ -403,6 +401,6 @@ downgradeStreet appState fieldId = appState { fields = updFields }
       (fields appState)
     updProperty   = Property propertyField { propertyType = updStreet }
     propertyField = getProperty appState fieldId
-    updStreet     = Street street { upgrades = (upgrades street) - 1 }
+    updStreet     = Street street { upgrades = upgrades street - 1 }
     street        = getStreet appState fieldId
 
