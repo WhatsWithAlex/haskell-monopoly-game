@@ -38,7 +38,7 @@ data AppState = AppState
   }
   deriving Show
   
--- All infrormation about player
+-- All information about player
 data PlayerState = PlayerState 
   { playerId :: Int           -- Player id number (0 - 4)
   , position :: Int           -- Position on board (BoardField id)
@@ -46,6 +46,7 @@ data PlayerState = PlayerState
   , status :: Status          -- True if the player is in jail
   , ownProperty :: [Int]      -- List with fields id's of player's property
   , playerPicture :: Picture  -- Loaded player picture
+  , picPos :: Vec             -- Position of the player picture on the screen
   }
   deriving Show
 

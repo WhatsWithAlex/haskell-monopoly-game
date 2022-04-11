@@ -32,6 +32,21 @@ removeItem x (y:ys)
 (|-|) :: Vec -> Vec -> Vec 
 (|-|) (x1, y1) (x2, y2) = (x1 - x2, y1 - y2)
 
+-- Multiply vector by scalar value
+(|*|) :: Vec -> Float -> Vec
+(|*|) (x, y) a = (a * x, a * y)
+
+-- Get vector length
+getVecLen :: Vec -> Float
+getVecLen (x, y) = sqrt (x * x + y * y)
+
+-- Normalize vector
+normalizeVec :: Vec -> Vec
+normalizeVec (x, y) = case len of 
+  0.0 -> (0, 0)
+  l   -> (x / l, y / l)
+  where len = getVecLen (x, y)
+
 -- Check if vector (point) is inside a rectangle
 isInside :: Vec -> Rectangle -> Bool
 isInside (x, y) (offset, size) = 

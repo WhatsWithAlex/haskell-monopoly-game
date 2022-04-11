@@ -8,7 +8,7 @@ import Types
 
 -- Game display mode
 display :: Display
-display = FullScreen
+display = InWindow "Monopoly" (1920, 1080) (0, 0)
 
 -- Background color
 bgColor :: Color
@@ -67,7 +67,7 @@ hotelImagePath = "./resource/hotel.bmp"
 
 -- Shift of the board's center from the origin
 boardCenterShift :: Vec
-boardCenterShift = (-1024.0, 0.0)
+boardCenterShift = (-423.0, 0.0)
 
 -- Shift of the board's top left corner from it's center
 boardTLCShift :: Vec
@@ -75,7 +75,7 @@ boardTLCShift = (-512.0, 512.0)
 
 -- Shift of the statistics' top left corner from the origin
 statsShift :: Vec 
-statsShift = (-512.0, 384.0)
+statsShift = (100.0, 450.0)
 
 -- Horizontal shift of the houses from each other
 houseShift :: Float
@@ -192,19 +192,19 @@ initialAppState =
 
 -- Initial players state
 initialPlayer0 :: PlayerState
-initialPlayer0 = PlayerState 0 0 1500 Playing [] Blank
+initialPlayer0 = PlayerState 0 0 1500 Playing [] Blank (0, 0)
 
 initialPlayer1 :: PlayerState
-initialPlayer1 = PlayerState 1 0 1500 Playing [] Blank
+initialPlayer1 = PlayerState 1 0 1500 Playing [] Blank (0, 0)
 
 initialPlayer2 :: PlayerState
-initialPlayer2 = PlayerState 2 0 1500 Bankrupt [] Blank
+initialPlayer2 = PlayerState 2 0 1500 Bankrupt [] Blank (0, 0)
 
 initialPlayer3 :: PlayerState
-initialPlayer3 = PlayerState 3 0 1500 Bankrupt [] Blank
+initialPlayer3 = PlayerState 3 0 1500 Bankrupt [] Blank (0, 0) 
 
 initialPlayer4 :: PlayerState
-initialPlayer4 = PlayerState 4 0 1500 Bankrupt [] Blank
+initialPlayer4 = PlayerState 4 0 1500 Bankrupt [] Blank (0, 0)
 
 -- Colors of the players
 playersColors :: [Color]
@@ -376,3 +376,6 @@ initialBoardFields = [
       ))
     ))
   ] 
+
+figureAnimationVelocity :: Float 
+figureAnimationVelocity = 1000

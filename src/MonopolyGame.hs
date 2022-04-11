@@ -107,7 +107,7 @@ payMoney :: AppState -> AppState
 payMoney appState
   | status curPlayer == Paying  = passNextTurn payState
   | status curPlayer == Jailed  = payState
-  | otherwise                   = aucState
+  | otherwise                   = appState
   where   
     payState  = case fldType of
       Property propertyField -> 
@@ -119,7 +119,6 @@ payMoney appState
       _           -> appState
     fldType   = getFieldType appState (position curPlayer)
     curPlayer = getCurrentPlayer appState
-    aucState  = setCurPlayerStatus appState Playing
 
 -- Process upgrading / lifting mortgaged property
 makeUpgrade :: AppState -> Int -> AppState
@@ -316,7 +315,7 @@ drawPlayer player
   | status player /= Bankrupt  = Translate x y pic
   | otherwise                  = Blank
   where 
-      (x, y)  = fieldId2Vec (position player) |+| offset
+      (x, y)  = picPos player |+| offset
       (xJail, yJail) = fieldId2Vec jailFieldId |+| jailedShift |+| offset
       pic     = playerPicture player
       offset  = playersFieldShift !! playerId player
@@ -329,9 +328,10 @@ drawInfo appState = Pictures [dicesPic, playersStatsPic]
     dicesPics = dicesPictures appState 
     (v1, v2)  = dicesValue appState
     playersStatsPic = 
-      Translate xStats yStats
-      (Pictures 
-      (map (drawPlayerStats appState) (players appState)))
+      Translate xStats yStats $
+      Scale 0.35 0.35 $
+      Pictures 
+      (map (drawPlayerStats appState) (players appState))
     (xDices, yDices) = boardCenterShift
     (xStats, yStats) = statsShift
     
@@ -393,9 +393,22 @@ handleEvent (EventKey (MouseButton RightButton) Down _ (x, y)) appState =
 -- Ignore all other events.
 handleEvent _ appState = appState
 
--- Simulation step (updates nothing)
+updatePlayerPos :: Float -> PlayerState -> PlayerState
+updatePlayerPos t plr  = plr { picPos = updPos }
+  where
+    updPos  = if getVecLen (destPos |-| newPos) < 10
+              then destPos
+              else newPos
+    newPos  = curPos |+| (dirVec |*| (t * figureAnimationVelocity))
+    dirVec  = normalizeVec (destPos |-| curPos)
+    curPos  = picPos plr
+    destPos = fieldId2Vec (position plr) 
+
+-- Simulation step (animation)
 updateApp :: Float -> AppState -> AppState
-updateApp _ appState = appState
+updateApp t appState = appState { players = updPlayers }
+  where
+    updPlayers = map (updatePlayerPos t) (players appState)
    
 ------------------------------
 -- Main function for this app
@@ -422,11 +435,12 @@ run = do
   rndGen1 <- newStdGen
   rndGen2 <- newStdGen
 
-  let initiatedPlayer0 = initialPlayer0 { playerPicture = player0Pic }
-  let initiatedPlayer1 = initialPlayer1 { playerPicture = player1Pic }
-  let initiatedPlayer2 = initialPlayer2 { playerPicture = player2Pic }
-  let initiatedPlayer3 = initialPlayer3 { playerPicture = player3Pic }
-  let initiatedPlayer4 = initialPlayer4 { playerPicture = player4Pic }
+  let initPicPos = fieldId2Vec 0
+  let initiatedPlayer0 = initialPlayer0 { playerPicture = player0Pic, picPos = initPicPos }
+  let initiatedPlayer1 = initialPlayer1 { playerPicture = player1Pic, picPos = initPicPos }
+  let initiatedPlayer2 = initialPlayer2 { playerPicture = player2Pic, picPos = initPicPos }
+  let initiatedPlayer3 = initialPlayer3 { playerPicture = player3Pic, picPos = initPicPos }
+  let initiatedPlayer4 = initialPlayer4 { playerPicture = player4Pic, picPos = initPicPos }
 
   let initiatedPlayers = [initiatedPlayer0, initiatedPlayer1, initiatedPlayer2, initiatedPlayer3, initiatedPlayer4]
 
