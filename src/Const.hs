@@ -1,8 +1,7 @@
 module Const where
 
 import Graphics.Gloss.Interface.Pure.Game
-import System.Random
-import System.Environment
+import System.Random ( mkStdGen )
 
 import Types 
 
@@ -96,7 +95,7 @@ playersFieldShift =
 playersStatsShift :: [Vec]
 playersStatsShift =
   [ (0.0, 0.0)    -- 0
-  , (0.0, -128.0)  -- 1
+  , (0.0, -128.0) -- 1
   , (0.0, -256.0) -- 2
   , (0.0, -384.0) -- 3
   , (0.0, -512.0) -- 4
@@ -109,7 +108,7 @@ houseUpgradesShift =
   [ (16.0, -90.0)  -- 0
   , (45.0, -16.0)  -- 1
   , (16.0, -90.0)  -- 2
-  , (90.0, -64.0)     -- 3
+  , (90.0, -64.0)  -- 3
   ]
 
 -- Shift of jailed player figure from field's top left corner

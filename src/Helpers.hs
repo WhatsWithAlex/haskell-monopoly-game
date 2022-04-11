@@ -1,7 +1,6 @@
 module Helpers where 
 
-import Data.List
-import Debug.Trace
+import Data.List ( findIndex )
 
 import Types
 import Const
@@ -52,14 +51,14 @@ vec2FieldId vec =
 
 -- Get top left corner position of field on screen by field id
 fieldId2Vec :: Int -> Vec
-fieldId2Vec id =
+fieldId2Vec plrId =
   boardCenterShift |+|
   boardTLCShift |+| 
-  fst (fieldRects !! id)
+  fst (fieldRects !! plrId)
 
 -- Get player info by id
 getPlayer :: AppState -> Int -> PlayerState
-getPlayer appState id = players appState !! id
+getPlayer appState plrId = players appState !! plrId
 
 -- Return current player info
 getCurrentPlayer :: AppState -> PlayerState
@@ -94,13 +93,13 @@ setCurPlayerStatus appState newStatus = appState { players = updatedPlayers }
 
 -- Decrease player's money
 decreasePlayerBalance :: AppState -> Int -> Int -> AppState
-decreasePlayerBalance appState playerId amount = 
+decreasePlayerBalance appState plrId amount = 
   appState { players = updatedPlayers }
   where
     updatedPlayers  = 
       modifyAt 
-      playerId (\ plr -> plr { balance = updBalance }) (players appState)
-    updBalance = balance (getPlayer appState playerId) - amount
+      plrId (\ plr -> plr { balance = updBalance }) (players appState)
+    updBalance = balance (getPlayer appState plrId) - amount
 
 -- Decrease current player's money
 decreaseCurPlayerBalance :: AppState -> Int -> AppState
@@ -109,13 +108,13 @@ decreaseCurPlayerBalance appState =
 
 -- Increase player's money
 increasePlayerBalance :: AppState -> Int -> Int -> AppState
-increasePlayerBalance appState playerId amount = 
+increasePlayerBalance appState plrId amount = 
   appState { players = updatedPlayers }
   where
     updatedPlayers  = 
       modifyAt 
-      playerId (\ plr -> plr { balance = updBalance }) (players appState)
-    updBalance = balance (getPlayer appState playerId) + amount
+      plrId (\ plr -> plr { balance = updBalance }) (players appState)
+    updBalance = balance (getPlayer appState plrId) + amount
 
 -- Increase current player's money
 increaseCurPlayerBalance :: AppState -> Int -> AppState
@@ -124,36 +123,36 @@ increaseCurPlayerBalance appState =
 
 -- Pay money to given player by current player
 payToPlayer :: AppState -> Int -> Int -> AppState
-payToPlayer appState playerId amount = 
-  increasePlayerBalance decreasedState playerId amount
+payToPlayer appState plrId amount = 
+  increasePlayerBalance decreasedState plrId amount
   where
     decreasedState = decreaseCurPlayerBalance appState amount
 
 -- Get field information by field id
 getBoardField :: AppState -> Int -> BoardField
-getBoardField appState id = boardFields !! id
+getBoardField appState fldId = boardFields !! fldId
   where
     boardFields = fields appState
 
 -- Get field type by field id
 getFieldType :: AppState -> Int -> FieldType
-getFieldType appState id = fieldType (getBoardField appState id)
+getFieldType appState fldId = fieldType (getBoardField appState fldId)
 
 -- Get information about property by field id
 getProperty :: AppState -> Int -> PropertyField 
-getProperty appState id = 
-  case getFieldType appState id of
+getProperty appState fldId = 
+  case getFieldType appState fldId of
     Property prop -> prop
     _ -> error "getProperty: not a property"
 
 -- Get property type by field id
 getPropertyType :: AppState -> Int -> PropertyType 
-getPropertyType appState id = propertyType (getProperty appState id)
+getPropertyType appState fldId = propertyType (getProperty appState fldId)
 
 -- Get information about street field by field id
 getStreet :: AppState -> Int -> StreetField
-getStreet appState id = 
-  case getPropertyType appState id of
+getStreet appState fldId = 
+  case getPropertyType appState fldId of
     Street street -> street
     _ -> error "getProperty: not a street"
 
@@ -163,23 +162,23 @@ hasOwner propertyField = ownerId propertyField /= -1
 
 -- Add property field by id to the given player
 addPlayerProperty :: AppState -> Int -> Int -> AppState
-addPlayerProperty appState playerId fieldId = 
+addPlayerProperty appState plrId fldId = 
   appState { players = updatedPlayers, fields = updFields }
   where
     updatedPlayers = 
       modifyAt 
-      playerId
+      plrId
       (\ plr -> plr { ownProperty = updOwnProperty }) 
       (players appState)
-    updOwnProperty = ownProperty player ++ [fieldId]
+    updOwnProperty = ownProperty player ++ [fldId]
     updFields = 
       modifyAt 
-      fieldId 
+      fldId 
       (\ field -> field { fieldType = updProperty }) 
       (fields appState)
-    updProperty   = Property propertyField { ownerId = playerId }
-    propertyField = getProperty appState fieldId
-    player        = getPlayer appState playerId
+    updProperty   = Property propertyField { ownerId = plrId }
+    propertyField = getProperty appState fldId
+    player        = getPlayer appState plrId
 
 -- Add property field by id to the current player
 addCurPlayerProperty :: AppState -> Int -> AppState
@@ -188,23 +187,23 @@ addCurPlayerProperty appState =
 
 -- Remove property field by id from the given player
 removePlayerProperty :: AppState -> Int -> Int -> AppState
-removePlayerProperty appState playerId fieldId = 
+removePlayerProperty appState plrId fldId = 
   appState { players = updatedPlayers, fields = updFields }
   where
     updatedPlayers = 
       modifyAt 
-      playerId
+      plrId
       (\ plr -> plr { ownProperty = updOwnProperty }) 
       (players appState)
-    updOwnProperty = removeItem fieldId (ownProperty player)
+    updOwnProperty = removeItem fldId (ownProperty player)
     updFields = 
       modifyAt 
-      fieldId 
+      fldId 
       (\ field -> field { fieldType = updProperty }) 
       (fields appState)
     updProperty   = Property propertyField { ownerId = -1 }
-    propertyField = getProperty appState fieldId
-    player        = getPlayer appState playerId
+    propertyField = getProperty appState fldId
+    player        = getPlayer appState plrId
 
 -- Remove property field by id from the current player
 removeCurPlayerProperty :: AppState -> Int -> AppState
@@ -220,21 +219,21 @@ removeCurPlayerAllProperty appState =
 
 -- How many railway stations does player have
 countOwnedStations :: AppState -> Int -> Int
-countOwnedStations appState playerId = 
+countOwnedStations appState plrId = 
   length 
-  (filter (\ fieldId -> getPropertyType appState fieldId == RailwayStation) 
+  (filter (\ fldId -> getPropertyType appState fldId == RailwayStation) 
   (ownProperty player))
   where
-    player = getPlayer appState playerId
+    player = getPlayer appState plrId
 
 -- How many utilities does player have
 countOwnedUtilities :: AppState -> Int -> Int
-countOwnedUtilities appState playerId = 
+countOwnedUtilities appState plrId = 
   length 
-  (filter (\ fieldId -> getPropertyType appState fieldId == Utility) 
+  (filter (\ fldId -> getPropertyType appState fldId == Utility) 
   (ownProperty player))
   where
-    player = getPlayer appState playerId
+    player = getPlayer appState plrId
 
 -- Calсulate the rent for the given property
 getRentAmount :: AppState -> PropertyField -> Int
@@ -261,16 +260,16 @@ jailCurPlayer appState =
 
 -- Get mortgage price sum of all property owned by the given player
 getPlayerPropertyPrice :: AppState -> Int -> Int
-getPlayerPropertyPrice appState playerId = 
+getPlayerPropertyPrice appState plrId = 
   sum $ map 
-  (\ fieldId -> case getPropertyType appState fieldId of 
+  (\ fldId -> case getPropertyType appState fldId of 
     Street str  -> 
-      upgrades str * (getUpgradePrice appState fieldId `div` 2)
+      upgrades str * (getUpgradePrice appState fldId `div` 2)
     _ -> 
-      buyPrice (getProperty appState fieldId) `div` 2)
+      buyPrice (getProperty appState fldId) `div` 2)
   (ownProperty player)
   where
-    player = getPlayer appState playerId
+    player = getPlayer appState plrId
 
 -- Get mortgage price sum of all property owned by the current player
 getCurPlayerPropertyPrice :: AppState -> Int
@@ -290,42 +289,42 @@ enoughCurBalance appState amount = balance curPlayer >= amount
 
 -- Check if current player has enough balance to pay and make payment
 checkAndPay :: AppState -> Int -> Int -> AppState
-checkAndPay appState playerId amount 
+checkAndPay appState plrId amount 
   | enoughCurBalance appState amount  = setCurPlayerStatus updState Playing
   | enoughCurProperty appState amount = appState
   | otherwise                         = setCurPlayerStatus (removeCurPlayerAllProperty appState) Bankrupt
   where 
-    updState = case playerId of 
-      -1 -> decreaseCurPlayerBalance appState amount
-      id -> payToPlayer appState id amount
+    updState = case plrId of 
+      -1    -> decreaseCurPlayerBalance appState amount
+      i -> payToPlayer appState i amount
 
 -- Mortgage property by field id
 mortgageProperty :: AppState -> Int -> AppState
-mortgageProperty appState fieldId = appState { fields = updFields }
+mortgageProperty appState fldId = appState { fields = updFields }
   where
     updFields = 
       modifyAt 
-      fieldId 
+      fldId 
       (\ field -> field { fieldType = updProperty }) 
       (fields appState)
     updProperty   = Property propertyField { isMortgaged = True }
-    propertyField = getProperty appState fieldId
+    propertyField = getProperty appState fldId
 
 -- Lift mortgaged property by field id
 liftProperty :: AppState -> Int -> AppState
-liftProperty appState fieldId = appState { fields = updFields }
+liftProperty appState fldId = appState { fields = updFields }
   where
     updFields = 
       modifyAt 
-      fieldId 
+      fldId 
       (\ field -> field { fieldType = updProperty }) 
       (fields appState)
     updProperty   = Property propertyField { isMortgaged = False }
-    propertyField = getProperty appState fieldId
+    propertyField = getProperty appState fldId
 
 -- Calculate street field upgrade price
 getUpgradePrice :: AppState -> Int -> Int
-getUpgradePrice appState fieldId = 50 * (fieldId `div` 10 + 1)
+getUpgradePrice _ fldId = 50 * (fldId `div` 10 + 1)
 
 -- Check if current player has all streets of the given color
 hasMonopoly :: AppState -> StreetColor -> Bool
@@ -338,7 +337,7 @@ hasMonopoly appState clr =
   where 
     colorStreets = 
       filter 
-      (\ fieldId -> case getPropertyType appState fieldId of 
+      (\ fldId -> case getPropertyType appState fldId of 
         Street street -> streetColor street == clr
         _ -> False)
       (ownProperty curPlayer)
@@ -378,29 +377,29 @@ getMaxUpgrade appState clr =
 
 -- Upgrade given street field
 upgradeStreet :: AppState -> Int -> AppState
-upgradeStreet appState fieldId = appState { fields = updFields }
+upgradeStreet appState fldId = appState { fields = updFields }
   where
     updFields = 
       modifyAt 
-      fieldId 
+      fldId 
       (\ field -> field { fieldType = updProperty }) 
       (fields appState)
     updProperty   = Property propertyField { propertyType = updStreet }
-    propertyField = getProperty appState fieldId
+    propertyField = getProperty appState fldId
     updStreet     = Street street { upgrades = upgrades street + 1 }
-    street        = getStreet appState fieldId
+    street        = getStreet appState fldId
 
 -- Downgrade given street field
 downgradeStreet :: AppState -> Int -> AppState
-downgradeStreet appState fieldId = appState { fields = updFields }
+downgradeStreet appState fldId = appState { fields = updFields }
   where
     updFields = 
       modifyAt 
-      fieldId 
+      fldId 
       (\ field -> field { fieldType = updProperty }) 
       (fields appState)
     updProperty   = Property propertyField { propertyType = updStreet }
-    propertyField = getProperty appState fieldId
+    propertyField = getProperty appState fldId
     updStreet     = Street street { upgrades = upgrades street - 1 }
-    street        = getStreet appState fieldId
+    street        = getStreet appState fldId
 

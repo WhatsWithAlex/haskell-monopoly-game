@@ -1,7 +1,7 @@
 module Types where
 
-import Graphics.Gloss.Interface.Pure.Game
-import System.Random
+import Graphics.Gloss.Interface.Pure.Game ( Picture )
+import System.Random ( StdGen )
 
 
 -- 2D Point/Vector on screen (in pixels)
@@ -15,11 +15,10 @@ type Rectangle = (Vec, Size)
 data PressButton = PressButton 
   { buttonId :: Int
   , buttonName :: String
-  , pos :: (Int, Int)
+  , buttonPos :: (Int, Int)
+  , buttonSize :: (Int, Int)
   , isActive :: Bool
   , isVisible :: Bool
-  , width :: Int 
-  , height :: Int
   , buttonPic :: Picture
   }
 

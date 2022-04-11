@@ -1,12 +1,8 @@
 module MonopolyGame where
 
 import Graphics.Gloss.Interface.Pure.Game
-import System.Random
-import System.Environment
-import Graphics.Gloss.Interface.IO.Game
-import Graphics.Gloss.Data.Bitmap
--- Debug only
-import Debug.Trace
+import Graphics.Gloss.Data.Bitmap ( loadBMP )
+import System.Random ( newStdGen, Random(randomR) )
 
 import Types
 import Const
@@ -52,7 +48,7 @@ throwDices appState
 processMove :: AppState -> AppState
 processMove appState = updState
   where       
-    updState = case fieldType of 
+    updState = case fldType of 
       Property propertyField -> 
         if 
           isMortgaged propertyField ||
@@ -64,9 +60,9 @@ processMove appState = updState
           setCurPlayerStatus movedState Paying
         else
           setCurPlayerStatus movedState Buying
-      Policeman   -> jailCurPlayer movedState
-      Tax amount  -> setCurPlayerStatus movedState Paying
-      _           -> movedState
+      Policeman -> jailCurPlayer movedState
+      Tax _     -> setCurPlayerStatus movedState Paying
+      _         -> movedState
     movedState = case doublesInRow appState of
       3 -> jailCurPlayer appState
       _ -> 
@@ -79,7 +75,7 @@ processMove appState = updState
           newState  = moveCurrentPlayer appState newCurPos
           newCurPos = getNewCurrentPos appState
           curPlayer = getCurrentPlayer appState
-    fieldType = getFieldType movedState (position movedPlayer)
+    fldType     = getFieldType movedState (position movedPlayer)
     movedPlayer = getCurrentPlayer movedState
 
 -- Process buying property
@@ -89,7 +85,7 @@ buyProperty appState isBuy
   | isBuy                       = passNextTurn buyState
   | otherwise                   = passNextTurn aucState
   where   
-    buyState  = case fieldType of
+    buyState  = case fldType of
       Property propertyField -> 
         if enoughCurBalance appState (buyPrice propertyField)
         then 
@@ -102,7 +98,7 @@ buyProperty appState isBuy
             (decreaseCurPlayerBalance appState (buyPrice propertyField)) 
             (position curPlayer)
       _ -> appState  
-    fieldType = getFieldType appState (position curPlayer)
+    fldType   = getFieldType appState (position curPlayer)
     curPlayer = getCurrentPlayer appState
     aucState  = setCurPlayerStatus appState Playing
   
@@ -111,9 +107,9 @@ payMoney :: AppState -> AppState
 payMoney appState
   | status curPlayer == Paying  = passNextTurn payState
   | status curPlayer == Jailed  = payState
-  | otherwise                   = appState
+  | otherwise                   = aucState
   where   
-    payState  = case fieldType of
+    payState  = case fldType of
       Property propertyField -> 
         checkAndPay appState (ownerId propertyField) rentAmount
         where
@@ -121,13 +117,13 @@ payMoney appState
       Tax amount  -> checkAndPay appState (-1) amount
       Jail        -> checkAndPay appState (-1) releaseTax
       _           -> appState
-    fieldType = getFieldType appState (position curPlayer)
+    fldType   = getFieldType appState (position curPlayer)
     curPlayer = getCurrentPlayer appState
     aucState  = setCurPlayerStatus appState Playing
 
 -- Process upgrading / lifting mortgaged property
 makeUpgrade :: AppState -> Int -> AppState
-makeUpgrade appState fieldId = case getFieldType appState fieldId of 
+makeUpgrade appState fldId = case getFieldType appState fldId of 
   Property propertyField -> case propertyType propertyField of 
     Street streetField -> 
       if 
@@ -139,7 +135,7 @@ makeUpgrade appState fieldId = case getFieldType appState fieldId of
       then 
         upgradeStreet 
         (decreaseCurPlayerBalance appState upgradePrice)
-        fieldId
+        fldId
       else if 
         enoughCurBalance appState liftPrice &&
         ownrId == currentPlayerId appState &&
@@ -147,15 +143,15 @@ makeUpgrade appState fieldId = case getFieldType appState fieldId of
       then
         liftProperty
         (decreaseCurPlayerBalance appState liftPrice)
-        fieldId
+        fldId
       else
         appState
       where 
-        upgradePrice  = getUpgradePrice appState fieldId
+        upgradePrice  = getUpgradePrice appState fldId
         liftPrice     = price `div` 2 + price `div` 10
         price      = buyPrice propertyField
         curMinUpgrade = getMinUpgrade appState (streetColor streetField)
-        ownrId        = ownerId (getProperty appState fieldId)
+        ownrId        = ownerId (getProperty appState fldId)
     _ ->
       if 
         enoughCurBalance appState liftPrice &&
@@ -164,18 +160,18 @@ makeUpgrade appState fieldId = case getFieldType appState fieldId of
       then
         liftProperty
         (decreaseCurPlayerBalance appState liftPrice)
-        fieldId
+        fldId
       else
         appState
       where 
         liftPrice     = price `div` 2 + price `div` 10
         price         = buyPrice propertyField
-        ownrId        = ownerId (getProperty appState fieldId)
+        ownrId        = ownerId (getProperty appState fldId)
   _ -> appState
 
 -- Process downgrading / mortgaging property
 makeDowngrade :: AppState -> Int -> AppState
-makeDowngrade appState fieldId = case getFieldType appState fieldId of 
+makeDowngrade appState fldId = case getFieldType appState fldId of 
   Property propertyField -> case propertyType propertyField of 
     Street streetField -> 
       if 
@@ -185,7 +181,7 @@ makeDowngrade appState fieldId = case getFieldType appState fieldId of
       then 
         downgradeStreet 
         (increaseCurPlayerBalance appState downgradePayment)
-        fieldId
+        fldId
       else if 
         ownrId == currentPlayerId appState &&
         upgrades streetField == 0 &&
@@ -193,14 +189,14 @@ makeDowngrade appState fieldId = case getFieldType appState fieldId of
       then
         mortgageProperty
         (increaseCurPlayerBalance appState mortgagePayment)
-        fieldId
+        fldId
       else 
         appState
       where
         maxUpgrade        = getMaxUpgrade appState (streetColor streetField)
-        downgradePayment  = getUpgradePrice appState fieldId `div` 2
+        downgradePayment  = getUpgradePrice appState fldId `div` 2
         mortgagePayment   = buyPrice propertyField `div` 2
-        ownrId            = ownerId (getProperty appState fieldId)
+        ownrId            = ownerId (getProperty appState fldId)
     _ ->
       if 
         ownrId == currentPlayerId appState &&
@@ -208,12 +204,12 @@ makeDowngrade appState fieldId = case getFieldType appState fieldId of
       then
         mortgageProperty
         (increaseCurPlayerBalance appState mortgagePayment)
-        fieldId
+        fldId
       else 
         appState
       where
         mortgagePayment   = buyPrice propertyField `div` 2
-        ownrId            = ownerId (getProperty appState fieldId)
+        ownrId            = ownerId (getProperty appState fldId)
   _ -> appState
 
 -- Pass the turn to the next player in game
@@ -241,13 +237,13 @@ passNextTurn appState
 -- Draw an app
 drawApp :: AppState -> Picture
 drawApp appState = 
-  Pictures [boardPic, fieldsPic, playersPic, infoPic, upgrades]
+  Pictures [boardPic, fieldsPic, playersPic, infoPic, upgradesPic]
   where 
     boardPic    = uncurry Translate boardCenterShift (boardPicture appState)
     fieldsPic   = Pictures (map drawField (fields appState))
     playersPic  = Pictures (map drawPlayer (players appState))
     infoPic     = drawInfo appState
-    upgrades    = 
+    upgradesPic = 
       Pictures
       (map (drawFieldUpgrades appState) (fields appState))
 
@@ -307,7 +303,7 @@ drawUpgrades (housePic, hotelPic) num = case num of
   n -> Pictures (drawHouses housePic n)
 
 drawHouses :: Picture -> Int -> [Picture]
-drawHouses housePic 0 = []
+drawHouses _ 0 = []
 drawHouses housePic idx = 
   Translate (houseShift * i) 0 housePic : drawHouses housePic (idx - 1)
   where 
@@ -341,7 +337,7 @@ drawInfo appState = Pictures [dicesPic, playersStatsPic]
     
 -- Draw dices images
 drawDices :: (Int, Int) -> [Picture] -> Picture
-drawDices (0, 0)   pics = Blank
+drawDices (0, 0) _      = Blank
 drawDices (v1, v2) pics = Pictures [pic1, pic2]
   where
     pic1 = Translate (-x) (-y) (pics !! (v1 - 1))
@@ -353,16 +349,16 @@ drawPlayerStats :: AppState -> PlayerState -> Picture
 drawPlayerStats appState player = 
   Translate x y statText
   where
-    (x, y)      = playersStatsShift !! id
+    (x, y)      = playersStatsShift !! plrId
     statText    = Color clr (Text statStr)
     statStr     = 
       arrow ++
       "Player" ++ idStr ++ ": " ++ balanceStr ++ " Status: " ++ statusStr
-    idStr       = show (id + 1)
+    idStr       = show (plrId + 1)
     balanceStr  = show (balance player)
     statusStr   = show (status player)
-    clr         = playersColors !! id
-    id          = playerId player
+    clr         = playersColors !! plrId
+    plrId       = playerId player
     arrow       = 
       if currentPlayerId appState == playerId player
       then 
@@ -387,12 +383,12 @@ handleEvent (EventKey (Char 'n') Down _ _) appState =
 -- Upgrade property by clicking LMB on it
 handleEvent (EventKey (MouseButton LeftButton) Down _ (x, y)) appState = 
   case vec2FieldId (x, y) of 
-    Just fieldId -> makeUpgrade appState fieldId
+    Just fldId -> makeUpgrade appState fldId
     Nothing -> appState
 -- Mortgage property or sell upgrade by clicking RMB on it
 handleEvent (EventKey (MouseButton RightButton) Down _ (x, y)) appState = 
   case vec2FieldId (x, y) of 
-    Just fieldId -> makeDowngrade appState fieldId
+    Just fldId -> makeDowngrade appState fldId
     Nothing -> appState
 -- Ignore all other events.
 handleEvent _ appState = appState

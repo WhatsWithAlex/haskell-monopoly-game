@@ -29,6 +29,7 @@ library
       Paths_haskell_monopoly_game
   hs-source-dirs:
       src
+  ghc-options: -Wall -Werror
   build-depends:
       base >=4.7 && <5
     , gloss
@@ -41,7 +42,7 @@ executable monopoly-game-exe
       Paths_haskell_monopoly_game
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
+  ghc-options: -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
     , gloss
