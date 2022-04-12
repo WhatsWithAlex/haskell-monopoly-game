@@ -215,7 +215,8 @@ makeDowngrade appState fldId = case getFieldType appState fldId of
 passNextTurn :: AppState -> AppState
 passNextTurn appState
   | status curPlayer  == Jailed   = passNextTurn updState
-  | doublesInRow appState > 0     = appState
+  | status curPlayer  == Playing &&
+    doublesInRow appState > 0     = appState
   | status curPlayer  == Buying   = appState
   | status curPlayer  == Paying   = appState
   | status nextPlayer == Bankrupt = passNextTurn updState
@@ -392,8 +393,6 @@ handleEvent (EventKey (MouseButton RightButton) Down _ (x, y)) appState =
     Nothing -> appState
 -- Ignore all other events.
 handleEvent _ appState = appState
-
-
 
 -- Simulation step (animation)
 updateApp :: Float -> AppState -> AppState
