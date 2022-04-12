@@ -198,10 +198,10 @@ initialPlayer1 :: PlayerState
 initialPlayer1 = PlayerState 1 0 1500 Playing [] Blank (0, 0)
 
 initialPlayer2 :: PlayerState
-initialPlayer2 = PlayerState 2 0 1500 Bankrupt [] Blank (0, 0)
+initialPlayer2 = PlayerState 2 0 1500 Playing [] Blank (0, 0)
 
 initialPlayer3 :: PlayerState
-initialPlayer3 = PlayerState 3 0 1500 Bankrupt [] Blank (0, 0) 
+initialPlayer3 = PlayerState 3 0 1500 Playing [] Blank (0, 0) 
 
 initialPlayer4 :: PlayerState
 initialPlayer4 = PlayerState 4 0 1500 Bankrupt [] Blank (0, 0)
@@ -378,4 +378,4 @@ initialBoardFields = [
   ] 
 
 figureAnimationVelocity :: Float 
-figureAnimationVelocity = 1000
+figureAnimationVelocity = 1500

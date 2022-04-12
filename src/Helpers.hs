@@ -307,7 +307,8 @@ checkAndPay :: AppState -> Int -> Int -> AppState
 checkAndPay appState plrId amount 
   | enoughCurBalance appState amount  = setCurPlayerStatus updState Playing
   | enoughCurProperty appState amount = appState
-  | otherwise                         = setCurPlayerStatus (removeCurPlayerAllProperty appState) Bankrupt
+  | otherwise = 
+    setCurPlayerStatus (removeCurPlayerAllProperty appState) Bankrupt
   where 
     updState = case plrId of 
       -1    -> decreaseCurPlayerBalance appState amount
@@ -418,3 +419,14 @@ downgradeStreet appState fldId = appState { fields = updFields }
     updStreet     = Street street { upgrades = upgrades street - 1 }
     street        = getStreet appState fldId
 
+-- Update player figure position on screen
+updatePlayerPos :: Float -> PlayerState -> PlayerState
+updatePlayerPos t plr  = plr { picPos = updPos }
+  where
+    updPos  = if getVecLen (destPos |-| newPos) < 20
+              then destPos
+              else newPos
+    newPos  = curPos |+| (dirVec |*| (t * figureAnimationVelocity))
+    dirVec  = normalizeVec (destPos |-| curPos)
+    curPos  = picPos plr
+    destPos = fieldId2Vec (position plr) 

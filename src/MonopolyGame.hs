@@ -393,16 +393,7 @@ handleEvent (EventKey (MouseButton RightButton) Down _ (x, y)) appState =
 -- Ignore all other events.
 handleEvent _ appState = appState
 
-updatePlayerPos :: Float -> PlayerState -> PlayerState
-updatePlayerPos t plr  = plr { picPos = updPos }
-  where
-    updPos  = if getVecLen (destPos |-| newPos) < 10
-              then destPos
-              else newPos
-    newPos  = curPos |+| (dirVec |*| (t * figureAnimationVelocity))
-    dirVec  = normalizeVec (destPos |-| curPos)
-    curPos  = picPos plr
-    destPos = fieldId2Vec (position plr) 
+
 
 -- Simulation step (animation)
 updateApp :: Float -> AppState -> AppState
@@ -436,19 +427,38 @@ run = do
   rndGen2 <- newStdGen
 
   let initPicPos = fieldId2Vec 0
-  let initiatedPlayer0 = initialPlayer0 { playerPicture = player0Pic, picPos = initPicPos }
-  let initiatedPlayer1 = initialPlayer1 { playerPicture = player1Pic, picPos = initPicPos }
-  let initiatedPlayer2 = initialPlayer2 { playerPicture = player2Pic, picPos = initPicPos }
-  let initiatedPlayer3 = initialPlayer3 { playerPicture = player3Pic, picPos = initPicPos }
-  let initiatedPlayer4 = initialPlayer4 { playerPicture = player4Pic, picPos = initPicPos }
-
-  let initiatedPlayers = [initiatedPlayer0, initiatedPlayer1, initiatedPlayer2, initiatedPlayer3, initiatedPlayer4]
+  let initiatedPlayer0 = initialPlayer0 { 
+      playerPicture = player0Pic 
+    , picPos = initPicPos 
+    }
+  let initiatedPlayer1 = initialPlayer1 { 
+      playerPicture = player1Pic 
+    , picPos = initPicPos 
+    }
+  let initiatedPlayer2 = initialPlayer2 { 
+      playerPicture = player2Pic 
+    , picPos = initPicPos 
+    }
+  let initiatedPlayer3 = initialPlayer3 { 
+      playerPicture = player3Pic 
+    , picPos = initPicPos 
+    }
+  let initiatedPlayer4 = initialPlayer4 { 
+      playerPicture = player4Pic 
+    , picPos = initPicPos 
+    }
 
   let dicesPics = [dice1Pic, dice2Pic, dice3Pic, dice4Pic, dice5Pic, dice6Pic]
   let initiatedAppState = initialAppState { 
       playerNumber = 5
     , randomGens = (rndGen1, rndGen2) 
-    , players = initiatedPlayers
+    , players = 
+      [ initiatedPlayer0
+      , initiatedPlayer1 
+      , initiatedPlayer2
+      , initiatedPlayer3
+      , initiatedPlayer4
+      ]
     , boardPicture = boardPic
     , housePicture = housePic
     , hotelPicture = hotelPic
