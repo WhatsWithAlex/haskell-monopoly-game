@@ -427,6 +427,16 @@ updatePlayerPos t plr  = plr { picPos = updPos }
               then destPos
               else newPos
     newPos  = curPos |+| (dirVec |*| (t * figureAnimationVelocity))
-    dirVec  = normalizeVec (destPos |-| curPos)
+    dirVec  = case normalizeVec (destPos |-| curPos) of
+      (x, 0) -> (x, 0)
+      (0, y) -> (0, y)
+      (x, y) -> 
+        if x > 0 && y > 0 
+        then (0, 1)
+        else if x > 0 && y < 0
+        then (1, 0)
+        else if x < 0 && y > 0
+        then (-1, 0)
+        else (0, -1)
     curPos  = picPos plr
     destPos = fieldId2Vec (position plr) 
