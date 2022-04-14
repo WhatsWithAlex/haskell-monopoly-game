@@ -1,6 +1,6 @@
 module Main where
 
-import MonopolyGame
+import Game
 
 
 main :: IO ()

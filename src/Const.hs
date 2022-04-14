@@ -12,7 +12,7 @@ display = InWindow "Monopoly" (1920, 1080) (0, 0)
 
 -- Background color
 bgColor :: Color
-bgColor = black
+bgColor = white
 
 -- Simulation steps per second
 fps :: Int

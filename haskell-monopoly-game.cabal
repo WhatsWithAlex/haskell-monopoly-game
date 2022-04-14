@@ -22,8 +22,9 @@ source-repository head
 library
   exposed-modules:
       Const
+      Game
+      Graphics
       Helpers
-      MonopolyGame
       Types
   other-modules:
       Paths_haskell_monopoly_game

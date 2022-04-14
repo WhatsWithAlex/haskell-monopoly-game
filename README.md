@@ -8,10 +8,11 @@
 	├── app                     # App entry point
 	├── recource                # Resource images (bmp) files for graphics
 	└── src      
-        ├── Types.hs            # Types that supports app logic
+        ├── Types.hs            # Types used in app logic
         ├── Const.hs            # All app's modules constants
-        ├── Helpers.hs          # Functions support main logic
-        └── MonopolyGame.hs     # Main app's logic: main logic functoins, drawing, event handling
+        ├── Helpers.hs          # Functions to support main logic
+        ├── Graphics.hs         # App state drawing functions
+        └── Game.hs             # Main app's logic: main logic functions and event handling
 
 **Controls**:
 * Space - Throw dices and start turn
