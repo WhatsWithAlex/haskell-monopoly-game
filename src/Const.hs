@@ -192,7 +192,7 @@ initialAppState =
 
 -- Initial players state
 initialPlayer0 :: PlayerState
-initialPlayer0 = PlayerState 0 0 1500 Playing 0 [] Blank (0, 0)
+initialPlayer0 = PlayerState 0 10 1500 Jailed 0 [] Blank (0, 0)
 
 initialPlayer1 :: PlayerState
 initialPlayer1 = PlayerState 1 0 1500 Playing 0 [] Blank (0, 0)
@@ -246,13 +246,13 @@ initialBoardFields = [
     BoardField 0 0 Start,
     BoardField 1 0 (Property (
       PropertyField (-1) 60 0 2 (Street (
-        StreetField Brown 0
+        StreetField Brown 0 False
       ))
     )),
     BoardField 2 0 CommunityChest,
     BoardField 3 0 (Property (
       PropertyField (-1) 60 0 4 (Street (
-        StreetField Brown 0
+        StreetField Brown 0 False
       ))
     )),
     BoardField 4 0 (Tax 200),
@@ -261,24 +261,24 @@ initialBoardFields = [
     )),
     BoardField 6 0 (Property (
       PropertyField (-1) 100 0 6 (Street (
-        StreetField LightBlue 0
+        StreetField LightBlue 0 False
       ))
     )),
     BoardField 7 0 Chance,
     BoardField 8 0 (Property (
       PropertyField (-1) 100 0 6 (Street (
-        StreetField LightBlue 0
+        StreetField LightBlue 0 False
       ))
     )),
     BoardField 9 0 (Property (
       PropertyField (-1) 100 0 8 (Street (
-        StreetField LightBlue 0
+        StreetField LightBlue 0 False
       ))
     )),
     BoardField 10 0 Jail,
     BoardField 11 0 (Property (
       PropertyField (-1) 140 0 10 (Street (
-        StreetField Pink 0
+        StreetField Pink 0 False
       ))
     )),
     BoardField 12 0 (Property (
@@ -286,12 +286,12 @@ initialBoardFields = [
     )),
     BoardField 13 0 (Property (
       PropertyField (-1) 140 0 10 (Street (
-        StreetField Pink 0
+        StreetField Pink 0 False
       ))
     )),
     BoardField 14 0 (Property (
       PropertyField (-1) 140 0 12 (Street (
-        StreetField Pink 0
+        StreetField Pink 0 False
       ))
     )),
     BoardField 15 0 (Property (
@@ -299,35 +299,35 @@ initialBoardFields = [
     )),
     BoardField 16 0 (Property (
       PropertyField (-1) 180 0 14 (Street (
-        StreetField Orange 0
+        StreetField Orange 0 False
       ))
     )),
     BoardField 17 0 CommunityChest,
     BoardField 18 0 (Property (
       PropertyField (-1) 180 0 14 (Street (
-        StreetField Orange 0
+        StreetField Orange 0 False
       ))
     )),
     BoardField 19 0 (Property (
       PropertyField (-1) 180 0 16 (Street (
-        StreetField Orange 0
+        StreetField Orange 0 False
       ))
     )),
     BoardField 20 0 Parking,
     BoardField 21 0 (Property (
       PropertyField (-1) 220 0 18 (Street (
-        StreetField Red 0
+        StreetField Red 0 False
       ))
     )),
     BoardField 22 0 Chance,
     BoardField 23 0 (Property (
       PropertyField (-1) 220 0 18 (Street (
-        StreetField Red 0
+        StreetField Red 0 False
       ))
     )),
     BoardField 24 0 (Property (
       PropertyField (-1) 220 0 20 (Street (
-        StreetField Red 0
+        StreetField Red 0 False
       ))
     )),
     BoardField 25 0 (Property (
@@ -335,12 +335,12 @@ initialBoardFields = [
     )),
     BoardField 26 0 (Property (
       PropertyField (-1) 260 0 22 (Street (
-        StreetField Yellow 0
+        StreetField Yellow 0 False
       ))
     )),
     BoardField 27 0 (Property (
       PropertyField (-1) 260 0 22 (Street (
-        StreetField Yellow 0
+        StreetField Yellow 0 False
       ))
     )),
     BoardField 28 0 (Property (
@@ -348,24 +348,24 @@ initialBoardFields = [
     )),
     BoardField 29 0 (Property (
       PropertyField (-1) 260 0 24 (Street (
-        StreetField Yellow 0
+        StreetField Yellow 0 False
       ))
     )),
     BoardField 30 0 Policeman,
     BoardField 31 0 (Property (
       PropertyField (-1) 300 0 26 (Street (
-        StreetField Green 0
+        StreetField Green 0 False
       ))
     )),
     BoardField 32 0 (Property (
       PropertyField (-1) 300 0 26 (Street (
-        StreetField Green 0
+        StreetField Green 0 False
       ))
     )),
     BoardField 33 0 CommunityChest,
     BoardField 34 0 (Property (
       PropertyField (-1) 300 0 28 (Street (
-        StreetField Green 0
+        StreetField Green 0 False
       ))
     )),
     BoardField 35 0 (Property (
@@ -374,13 +374,13 @@ initialBoardFields = [
     BoardField 36 0 Chance,
     BoardField 37 0 (Property (
       PropertyField (-1) 350 0 35 (Street (
-        StreetField DarkBlue 0
+        StreetField DarkBlue 0 False
       ))
     )),
     BoardField 38 0 (Tax 100),
     BoardField 39 0 (Property 
-      (PropertyField (-1) 400 0 50 (Street 
-        (StreetField DarkBlue 0
+      (PropertyField (-1) 400 0 50 (Street (
+        StreetField DarkBlue 0 False
       ))
     ))
   ] 

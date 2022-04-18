@@ -89,7 +89,9 @@ data PropertyType = Utility | RailwayStation | Street StreetField
 -- All information about street property
 data StreetField = StreetField
   { streetColor :: StreetColor  -- Color of the street
-  , upgrades :: Int       -- How many houses are built on street
+  , upgrades :: Int             -- How many houses are built on street
+  , upgradedThisTurn :: Bool    -- If player upgraded street of 
+                                -- this color on this turn
   }
   deriving (Show, Eq)
 

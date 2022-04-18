@@ -21,6 +21,9 @@ startTurn appState
   | status curPlayer == Jailed && 
     turnsInJail curPlayer < maxJailedTurns = 
     passNextTurn . processMove . processJail . throwDices $ appState
+  | status curPlayer == Jailed && 
+    turnsInJail curPlayer == maxJailedTurns = 
+    processMove . processJail . throwDices $ appState
   | otherwise = 
     appState
   where 
