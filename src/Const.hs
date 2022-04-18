@@ -236,6 +236,10 @@ releaseTax = 50
 maxMortgagedTurns :: Int
 maxMortgagedTurns = 15
 
+-- Maximum turns for player being in jail
+maxJailedTurns :: Int
+maxJailedTurns = 3
+
 -- Initial board state
 initialBoardFields :: [BoardField]
 initialBoardFields = [

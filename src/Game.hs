@@ -18,6 +18,9 @@ startTurn :: AppState -> AppState
 startTurn appState
   | status curPlayer == Playing = 
     passNextTurn . processMove . throwDices $ appState
+  | status curPlayer == Jailed && 
+    turnsInJail curPlayer < maxJailedTurns = 
+    passNextTurn . processMove . processJail . throwDices $ appState
   | otherwise = 
     appState
   where 
@@ -45,9 +48,26 @@ throwDices appState
     (val1, gen1)  = randomR diceNumRange (fst (randomGens appState))
     (val2, gen2)  = randomR diceNumRange (snd (randomGens appState))
 
+-- Process dice throwing while player is in jail
+processJail :: AppState -> AppState
+processJail appState = updState 
+  where
+    updState = appState { players = updPlayers }
+    updPlayers = 
+      replaceAt (playerId curPlayer) updCurPlayer (players appState)
+    updCurPlayer = 
+      if doublesInRow appState == 0
+      then 
+        curPlayer { turnsInJail = turnsInJail curPlayer + 1}
+      else 
+        curPlayer { turnsInJail = 0, status = Playing }
+    curPlayer = getCurrentPlayer appState
+
 -- Process current move
 processMove :: AppState -> AppState
-processMove appState = updState
+processMove appState 
+  | status curPlayer == Jailed = appState
+  | otherwise = updState
   where       
     updState = case fldType of 
       Property propertyField -> 
@@ -75,9 +95,9 @@ processMove appState = updState
         where
           newState  = moveCurrentPlayer appState newCurPos
           newCurPos = getNewCurrentPos appState
-          curPlayer = getCurrentPlayer appState
     fldType     = getFieldType movedState (position movedPlayer)
     movedPlayer = getCurrentPlayer movedState
+    curPlayer = getCurrentPlayer appState
 
 -- Process buying property
 buyProperty :: AppState -> Bool -> AppState
@@ -215,7 +235,6 @@ makeDowngrade appState fldId = case getFieldType appState fldId of
 -- Pass the turn to the next player in game
 passNextTurn :: AppState -> AppState
 passNextTurn appState
-  | status curPlayer  == Jailed   = passNextTurn updState
   | status curPlayer  == Playing &&
     doublesInRow appState > 0     = appState
   | status curPlayer  == Buying   = appState
@@ -223,6 +242,7 @@ passNextTurn appState
   | status nextPlayer == Bankrupt = passNextTurn updState
   | status nextPlayer == Playing  = updState
   | status nextPlayer == Jailed   = updState
+  | status curPlayer  == Jailed   = passNextTurn updState
   | otherwise                     = passNextTurn updState
   where 
     updState      = 
