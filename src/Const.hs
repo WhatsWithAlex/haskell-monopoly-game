@@ -192,19 +192,19 @@ initialAppState =
 
 -- Initial players state
 initialPlayer0 :: PlayerState
-initialPlayer0 = PlayerState 0 0 1500 Playing [] Blank (0, 0)
+initialPlayer0 = PlayerState 0 0 1500 Playing 0 [] Blank (0, 0)
 
 initialPlayer1 :: PlayerState
-initialPlayer1 = PlayerState 1 0 1500 Playing [] Blank (0, 0)
+initialPlayer1 = PlayerState 1 0 1500 Playing 0 [] Blank (0, 0)
 
 initialPlayer2 :: PlayerState
-initialPlayer2 = PlayerState 2 0 1500 Playing [] Blank (0, 0)
+initialPlayer2 = PlayerState 2 0 1500 Playing 0 [] Blank (0, 0)
 
 initialPlayer3 :: PlayerState
-initialPlayer3 = PlayerState 3 0 1500 Playing [] Blank (0, 0) 
+initialPlayer3 = PlayerState 3 0 1500 Playing 0 [] Blank (0, 0) 
 
 initialPlayer4 :: PlayerState
-initialPlayer4 = PlayerState 4 0 1500 Bankrupt [] Blank (0, 0)
+initialPlayer4 = PlayerState 4 0 1500 Bankrupt 0 [] Blank (0, 0)
 
 -- Colors of the players
 playersColors :: [Color]
@@ -232,150 +232,154 @@ roundSalary = 200
 releaseTax :: Int
 releaseTax = 50
 
+-- Maximum number of turns for mortgaged property
+maxMortgagedTurns :: Int
+maxMortgagedTurns = 15
+
 -- Initial board state
 initialBoardFields :: [BoardField]
 initialBoardFields = [
     BoardField 0 0 Start,
     BoardField 1 0 (Property (
-      PropertyField (-1) 60 False 2 (Street (
+      PropertyField (-1) 60 0 2 (Street (
         StreetField Brown 0
       ))
     )),
     BoardField 2 0 CommunityChest,
     BoardField 3 0 (Property (
-      PropertyField (-1) 60 False 4 (Street (
+      PropertyField (-1) 60 0 4 (Street (
         StreetField Brown 0
       ))
     )),
     BoardField 4 0 (Tax 200),
     BoardField 5 0 (Property (
-      PropertyField (-1) 200 False 25 RailwayStation
+      PropertyField (-1) 200 0 25 RailwayStation
     )),
     BoardField 6 0 (Property (
-      PropertyField (-1) 100 False 6 (Street (
+      PropertyField (-1) 100 0 6 (Street (
         StreetField LightBlue 0
       ))
     )),
     BoardField 7 0 Chance,
     BoardField 8 0 (Property (
-      PropertyField (-1) 100 False 6 (Street (
+      PropertyField (-1) 100 0 6 (Street (
         StreetField LightBlue 0
       ))
     )),
     BoardField 9 0 (Property (
-      PropertyField (-1) 100 False 8 (Street (
+      PropertyField (-1) 100 0 8 (Street (
         StreetField LightBlue 0
       ))
     )),
     BoardField 10 0 Jail,
     BoardField 11 0 (Property (
-      PropertyField (-1) 140 False 10 (Street (
+      PropertyField (-1) 140 0 10 (Street (
         StreetField Pink 0
       ))
     )),
     BoardField 12 0 (Property (
-      PropertyField (-1) 150 False 1 Utility
+      PropertyField (-1) 150 0 1 Utility
     )),
     BoardField 13 0 (Property (
-      PropertyField (-1) 140 False 10 (Street (
+      PropertyField (-1) 140 0 10 (Street (
         StreetField Pink 0
       ))
     )),
     BoardField 14 0 (Property (
-      PropertyField (-1) 140 False 12 (Street (
+      PropertyField (-1) 140 0 12 (Street (
         StreetField Pink 0
       ))
     )),
     BoardField 15 0 (Property (
-      PropertyField (-1) 200 False 25 RailwayStation
+      PropertyField (-1) 200 0 25 RailwayStation
     )),
     BoardField 16 0 (Property (
-      PropertyField (-1) 180 False 14 (Street (
+      PropertyField (-1) 180 0 14 (Street (
         StreetField Orange 0
       ))
     )),
     BoardField 17 0 CommunityChest,
     BoardField 18 0 (Property (
-      PropertyField (-1) 180 False 14 (Street (
+      PropertyField (-1) 180 0 14 (Street (
         StreetField Orange 0
       ))
     )),
     BoardField 19 0 (Property (
-      PropertyField (-1) 180 False 16 (Street (
+      PropertyField (-1) 180 0 16 (Street (
         StreetField Orange 0
       ))
     )),
     BoardField 20 0 Parking,
     BoardField 21 0 (Property (
-      PropertyField (-1) 220 False 18 (Street (
+      PropertyField (-1) 220 0 18 (Street (
         StreetField Red 0
       ))
     )),
     BoardField 22 0 Chance,
     BoardField 23 0 (Property (
-      PropertyField (-1) 220 False 18 (Street (
+      PropertyField (-1) 220 0 18 (Street (
         StreetField Red 0
       ))
     )),
     BoardField 24 0 (Property (
-      PropertyField (-1) 220 False 20 (Street (
+      PropertyField (-1) 220 0 20 (Street (
         StreetField Red 0
       ))
     )),
     BoardField 25 0 (Property (
-      PropertyField (-1) 200 False 25 RailwayStation
+      PropertyField (-1) 200 0 25 RailwayStation
     )),
     BoardField 26 0 (Property (
-      PropertyField (-1) 260 False 22 (Street (
+      PropertyField (-1) 260 0 22 (Street (
         StreetField Yellow 0
       ))
     )),
     BoardField 27 0 (Property (
-      PropertyField (-1) 260 False 22 (Street (
+      PropertyField (-1) 260 0 22 (Street (
         StreetField Yellow 0
       ))
     )),
     BoardField 28 0 (Property (
-      PropertyField (-1) 150 False 1 Utility
+      PropertyField (-1) 150 0 1 Utility
     )),
     BoardField 29 0 (Property (
-      PropertyField (-1) 260 False 24 (Street (
+      PropertyField (-1) 260 0 24 (Street (
         StreetField Yellow 0
       ))
     )),
     BoardField 30 0 Policeman,
     BoardField 31 0 (Property (
-      PropertyField (-1) 300 False 26 (Street (
+      PropertyField (-1) 300 0 26 (Street (
         StreetField Green 0
       ))
     )),
     BoardField 32 0 (Property (
-      PropertyField (-1) 300 False 26 (Street (
+      PropertyField (-1) 300 0 26 (Street (
         StreetField Green 0
       ))
     )),
     BoardField 33 0 CommunityChest,
     BoardField 34 0 (Property (
-      PropertyField (-1) 300 False 28 (Street (
+      PropertyField (-1) 300 0 28 (Street (
         StreetField Green 0
       ))
     )),
     BoardField 35 0 (Property (
-      PropertyField (-1) 200 False 25 RailwayStation
+      PropertyField (-1) 200 0 25 RailwayStation
     )),
     BoardField 36 0 Chance,
     BoardField 37 0 (Property (
-      PropertyField (-1) 350 False 35 (Street (
+      PropertyField (-1) 350 0 35 (Street (
         StreetField DarkBlue 0
       ))
     )),
     BoardField 38 0 (Tax 100),
     BoardField 39 0 (Property 
-      (PropertyField (-1) 400 False 50 (Street 
+      (PropertyField (-1) 400 0 50 (Street 
         (StreetField DarkBlue 0
       ))
     ))
   ] 
 
 figureAnimationVelocity :: Float 
-figureAnimationVelocity = 1500
+figureAnimationVelocity = 2000

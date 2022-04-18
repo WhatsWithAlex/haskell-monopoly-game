@@ -323,7 +323,7 @@ mortgageProperty appState fldId = appState { fields = updFields }
       fldId 
       (\ field -> field { fieldType = updProperty }) 
       (fields appState)
-    updProperty   = Property propertyField { isMortgaged = True }
+    updProperty   = Property propertyField { turnsMortgaged = 1 }
     propertyField = getProperty appState fldId
 
 -- Lift mortgaged property by field id
@@ -335,7 +335,7 @@ liftProperty appState fldId = appState { fields = updFields }
       fldId 
       (\ field -> field { fieldType = updProperty }) 
       (fields appState)
-    updProperty   = Property propertyField { isMortgaged = False }
+    updProperty   = Property propertyField { turnsMortgaged = 0 }
     propertyField = getProperty appState fldId
 
 -- Calculate street field upgrade price
@@ -419,11 +419,51 @@ downgradeStreet appState fldId = appState { fields = updFields }
     updStreet     = Street street { upgrades = upgrades street - 1 }
     street        = getStreet appState fldId
 
+-- Update current player's mortgaged property turn counter and
+-- check if property is mortgaged more than 15 turns and
+-- if true take it away from owner
+processMortgagedProperty :: AppState -> AppState
+processMortgagedProperty appState = newState
+  where
+    newState = foldl removeCurPlayerProperty updState removeProps
+    updState = appState { fields = updFields }
+    updFields =
+      map 
+      (\ field -> case fieldType field of 
+        Property propertyField -> 
+          if 
+            turnsMortgaged propertyField > 0 && 
+            ownerId propertyField == playerId curPlayer
+          then
+            field { fieldType = updFieldType }
+          else
+            field
+          where 
+            updFieldType = 
+              if turnsMortgaged propertyField + 1 <= maxMortgagedTurns
+              then
+                Property 
+                propertyField 
+                { turnsMortgaged = turnsMortgaged propertyField + 1 }
+              else
+                Property 
+                propertyField 
+                { turnsMortgaged = 0 }
+        _ -> field)
+      (fields appState)
+    removeProps = 
+      filter 
+      (\ fldId -> case getFieldType appState fldId of 
+        Property propertyField -> turnsMortgaged propertyField + 1 > 15
+        _ -> False)
+      (ownProperty curPlayer)
+    curPlayer = getCurrentPlayer appState
+
 -- Update player figure position on screen
 updatePlayerPos :: Float -> PlayerState -> PlayerState
 updatePlayerPos t plr  = plr { picPos = updPos }
   where
-    updPos  = if getVecLen (destPos |-| newPos) < 20
+    updPos  = if getVecLen (destPos |-| newPos) < 25
               then destPos
               else newPos
     newPos  = curPos |+| (dirVec |*| (t * figureAnimationVelocity))

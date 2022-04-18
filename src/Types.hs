@@ -42,8 +42,9 @@ data AppState = AppState
 data PlayerState = PlayerState 
   { playerId :: Int           -- Player id number (0 - 4)
   , position :: Int           -- Position on board (BoardField id)
-  , balance :: Int            -- Money the player have
-  , status :: Status          -- True if the player is in jail
+  , balance :: Int            -- Amount of player's money
+  , status :: Status          -- Current player status
+  , turnsInJail :: Int        -- How many turns player is in jail
   , ownProperty :: [Int]      -- List with fields id's of player's property
   , playerPicture :: Picture  -- Loaded player picture
   , picPos :: Vec             -- Position of the player picture on the screen
@@ -74,7 +75,7 @@ data FieldType =
 data PropertyField = PropertyField
   { ownerId :: Int          -- Owner player id number (-1 if no owner, 0 - 4)
   , buyPrice :: Int         -- Price for buying the property
-  , isMortgaged :: Bool     -- True if the property is mortaged
+  , turnsMortgaged :: Int   -- How many turns is property mortgaged
   , initialRentPrice :: Int -- How much the player must pay to the owner of the
                             -- property (w/o multipliers)
   , propertyType :: PropertyType

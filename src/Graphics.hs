@@ -25,9 +25,9 @@ drawField field = case fieldType field of
   Property propertyField -> 
     if ownerId propertyField /= -1 
     then 
-      if isMortgaged propertyField 
+      if turnsMortgaged propertyField > 0
       then 
-        Color clr (Pictures [fieldPic, mortgagedPic])
+        Pictures [Color clr (Pictures [fieldPic, mortgagedPic]), counterPic]
       else 
         Color clr fieldPic
     else
@@ -35,6 +35,10 @@ drawField field = case fieldType field of
     where
       fieldPic = Translate (x + w / 2 + 1) (y + h / 2) (rectangleWire w (-h))
       mortgagedPic = Line [(x, y), (x + w, y + h)]
+      counterPic = 
+        Translate (x + w / 3) (y + 0.75 * h) $
+        Scale 0.35 0.35 $
+        Text (show $ maxMortgagedTurns + 1 - turnsMortgaged propertyField)
       clr = playersColors !! ownerId propertyField
       (x, y) = fieldId2Vec (fieldId field)
       (w, h) = snd (fieldRects !! fieldId field)

@@ -52,7 +52,7 @@ processMove appState = updState
     updState = case fldType of 
       Property propertyField -> 
         if 
-          isMortgaged propertyField ||
+          turnsMortgaged propertyField > 0 ||
           ownerId propertyField == currentPlayerId appState
         then
           movedState
@@ -129,7 +129,7 @@ makeUpgrade appState fldId = case getFieldType appState fldId of
       if 
         enoughCurBalance appState upgradePrice &&
         hasMonopoly appState (streetColor streetField) &&
-        not (isMortgaged propertyField) &&
+        turnsMortgaged propertyField == 0 &&
         upgrades streetField == curMinUpgrade &&
         upgrades streetField < maxUpgrades
       then 
@@ -139,7 +139,7 @@ makeUpgrade appState fldId = case getFieldType appState fldId of
       else if 
         enoughCurBalance appState liftPrice &&
         ownrId == currentPlayerId appState &&
-        isMortgaged propertyField 
+        turnsMortgaged propertyField > 0
       then
         liftProperty
         (decreaseCurPlayerBalance appState liftPrice)
@@ -156,7 +156,7 @@ makeUpgrade appState fldId = case getFieldType appState fldId of
       if 
         enoughCurBalance appState liftPrice &&
         ownrId == currentPlayerId appState &&
-        isMortgaged propertyField 
+        turnsMortgaged propertyField > 0
       then
         liftProperty
         (decreaseCurPlayerBalance appState liftPrice)
@@ -185,7 +185,7 @@ makeDowngrade appState fldId = case getFieldType appState fldId of
       else if 
         ownrId == currentPlayerId appState &&
         upgrades streetField == 0 &&
-        not (isMortgaged propertyField)
+        turnsMortgaged propertyField == 0
       then
         mortgageProperty
         (increaseCurPlayerBalance appState mortgagePayment)
@@ -200,7 +200,7 @@ makeDowngrade appState fldId = case getFieldType appState fldId of
     _ ->
       if 
         ownrId == currentPlayerId appState &&
-        not (isMortgaged propertyField)
+        turnsMortgaged propertyField == 0
       then
         mortgageProperty
         (increaseCurPlayerBalance appState mortgagePayment)
@@ -225,7 +225,8 @@ passNextTurn appState
   | status nextPlayer == Jailed   = updState
   | otherwise                     = passNextTurn updState
   where 
-    updState      = appState { currentPlayerId = nextPlayerId }
+    updState      = 
+      processMortgagedProperty appState { currentPlayerId = nextPlayerId }
     curPlayer     = getCurrentPlayer appState
     nextPlayer    = players appState !! nextPlayerId
     nextPlayerId  = 
